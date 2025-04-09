@@ -203,10 +203,11 @@ function formatDate(date) {
 }
 
 function formatCurrency(value) {
-    if (value === null || value === undefined) return 'R$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
+    if (value === null || value === undefined) return '€ 0,00';
+    return '€ ' + new Intl.NumberFormat('pt-PT', {
+        style: 'decimal',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     }).format(value);
 }
 

@@ -25,9 +25,8 @@
                                 <Select
                                     id="supplier_id"
                                     v-model="form.supplier_id"
-                                    :options="suppliers"
-                                    option-label="name"
-                                    option-value="id"
+                                    :options="suppliers.map(s => ({ value: s.id, label: s.company_name }))"
+                                    :error="form.errors.supplier_id"
                                 />
                                 <p v-if="form.errors.supplier_id" class="text-sm text-red-600 mt-1">
                                     {{ form.errors.supplier_id }}
@@ -76,15 +75,15 @@
                                 </p>
                             </div>
 
-                            <!-- Valor Total -->
+                            <!-- Valor da Fatura (alterado de "Valor Total") -->
                             <div>
-                                <Label for="total_amount">Valor Total</Label>
+                                <Label for="total_amount">Valor da Fatura</Label>
                                 <Input
                                     id="total_amount"
-                                    v-model="form.total_amount"
-                                    type="number"
-                                    step="0.01"
+                                    :value="form.total_amount ? `€ ${form.total_amount}` : '€ 0,00'"
+                                    type="text"
                                     required
+                                    readonly
                                 />
                                 <p v-if="form.errors.total_amount" class="text-sm text-red-600 mt-1">
                                     {{ form.errors.total_amount }}
@@ -96,14 +95,26 @@
                                 <Label for="tax_amount">Valor do Imposto</Label>
                                 <Input
                                     id="tax_amount"
-                                    v-model="form.tax_amount"
-                                    type="number"
-                                    step="0.01"
+                                    :value="form.tax_amount ? `€ ${form.tax_amount}` : '€ 0,00'"
+                                    type="text"
                                     required
+                                    readonly
                                 />
                                 <p v-if="form.errors.tax_amount" class="text-sm text-red-600 mt-1">
                                     {{ form.errors.tax_amount }}
                                 </p>
+                            </div>
+
+                            <!-- Total da Fatura + Impostos -->
+                            <div>
+                                <Label for="grand_total">Total (Valor da Fatura + Impostos)</Label>
+                                <Input
+                                    id="grand_total"
+                                    :value="calculateGrandTotal"
+                                    class="font-medium text-base"
+                                    type="text"
+                                    readonly
+                                />
                             </div>
 
                             <!-- Status -->
@@ -133,13 +144,13 @@
                                     id="payment_method"
                                     v-model="form.payment_method"
                                     :options="[
-                                        { label: 'Boleto', value: 'boleto' },
-                                        { label: 'Cartão de Crédito', value: 'credit_card' },
-                                        { label: 'Transferência', value: 'transfer' },
-                                        { label: 'Dinheiro', value: 'cash' },
+                                        { value: 'credit_card', label: 'Cartão de Crédito' },
+                                        { value: 'bank_transfer', label: 'Transferência Bancária' },
+                                        { value: 'multibanco', label: 'Referência Multibanco' },
+                                        { value: 'cash', label: 'Dinheiro' },
+                                        { value: 'other', label: 'Outro' }
                                     ]"
-                                    option-label="label"
-                                    option-value="value"
+                                    :error="form.errors.payment_method"
                                 />
                                 <p v-if="form.errors.payment_method" class="text-sm text-red-600 mt-1">
                                     {{ form.errors.payment_method }}
@@ -186,6 +197,122 @@
                                 </p>
                             </div>
 
+                            <!-- Itens da Fatura -->
+                            <div class="border rounded-md p-4 space-y-4">
+                                <h3 class="font-medium text-lg">Itens da Fatura</h3>
+                                
+                                <!-- Lista de itens -->
+                                <div v-if="items.length > 0" class="mb-4">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Descrição</TableHead>
+                                                <TableHead>Quantidade</TableHead>
+                                                <TableHead>Preço Unitário</TableHead>
+                                                <TableHead>Taxa de Imposto (%)</TableHead>
+                                                <TableHead>Valor do Imposto</TableHead>
+                                                <TableHead>Total</TableHead>
+                                                <TableHead>Ações</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            <TableRow v-for="(item, index) in items" :key="index">
+                                                <TableCell>{{ item.description }}</TableCell>
+                                                <TableCell>{{ item.quantity }}</TableCell>
+                                                <TableCell>{{ formatCurrency(item.unit_price) }}</TableCell>
+                                                <TableCell>{{ item.tax_rate }}%</TableCell>
+                                                <TableCell>{{ formatCurrency(item.tax_amount) }}</TableCell>
+                                                <TableCell>{{ formatCurrency(item.total) }}</TableCell>
+                                                <TableCell>
+                                                    <Button 
+                                                        variant="destructive" 
+                                                        size="sm" 
+                                                        @click="removeItem(index)">
+                                                        Remover
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                                
+                                <!-- Formulário para adicionar item -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label for="item_description">Descrição</Label>
+                                        <Input
+                                            id="item_description"
+                                            v-model="currentItem.description"
+                                            type="text"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label for="item_quantity">Quantidade</Label>
+                                        <Input
+                                            id="item_quantity"
+                                            v-model="currentItem.quantity"
+                                            type="number"
+                                            min="1"
+                                            @input="calculateItemTotals"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label for="item_unit_price">Preço Unitário</Label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-2.5">€</span>
+                                            <Input
+                                                id="item_unit_price"
+                                                v-model="currentItem.unit_price"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                class="pl-8"
+                                                @input="calculateItemTotals"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label for="item_tax_rate">Taxa de Imposto (%)</Label>
+                                        <Input
+                                            id="item_tax_rate"
+                                            v-model="currentItem.tax_rate"
+                                            type="number"
+                                            min="0"
+                                            @input="calculateItemTotals"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label for="item_tax_amount">Valor do Imposto</Label>
+                                        <Input
+                                            id="item_tax_amount"
+                                            :value="currentItem.tax_amount ? `€ ${currentItem.tax_amount}` : '€ 0,00'"
+                                            type="text"
+                                            readonly
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label for="item_total">Total</Label>
+                                        <Input
+                                            id="item_total"
+                                            :value="currentItem.total ? `€ ${currentItem.total}` : '€ 0,00'"
+                                            type="text"
+                                            readonly
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <!-- Botão para adicionar item -->
+                                <div class="mt-4">
+                                    <Button 
+                                        type="button" 
+                                        @click="addItem" 
+                                        :disabled="!isItemValid"
+                                        variant="outline">
+                                        Adicionar Item
+                                    </Button>
+                                </div>
+                            </div>
+
                             <!-- Botões -->
                             <div class="flex justify-end space-x-2">
                                 <Link :href="route('invoices.index')">
@@ -212,6 +339,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
     auth: Object,
@@ -221,29 +357,131 @@ const props = defineProps({
     },
 });
 
+const items = ref([]);
+const currentItem = ref({
+    description: '',
+    quantity: 1,
+    unit_price: 0,
+    tax_rate: 23, // IVA padrão em Portugal
+    tax_amount: 0,
+    total: 0
+});
+
 const form = useForm({
     supplier_id: '',
     invoice_number: '',
     issue_date: '',
     due_date: '',
-    total_amount: '',
-    tax_amount: '',
+    total_amount: '0',
+    tax_amount: '0',
     status: 'pending',
     payment_method: '',
     payment_date: '',
     file: null,
     notes: '',
+    items: []
 });
+
+const isItemValid = computed(() => {
+    return currentItem.value.description && 
+           currentItem.value.quantity > 0 && 
+           currentItem.value.unit_price > 0;
+});
+
+const calculateGrandTotal = computed(() => {
+    const totalAmount = parseFloat(form.total_amount) || 0;
+    const taxAmount = parseFloat(form.tax_amount) || 0;
+    return formatCurrency(totalAmount + taxAmount);
+});
+
+function calculateItemTotals() {
+    // Certifique-se de que os valores são números
+    const quantity = Number(currentItem.value.quantity) || 0;
+    const unitPrice = Number(currentItem.value.unit_price) || 0;
+    const taxRate = Number(currentItem.value.tax_rate) || 0;
+    
+    // Calcular o valor base (sem imposto)
+    const baseAmount = quantity * unitPrice;
+    
+    // Calcular o valor do imposto
+    const taxAmount = baseAmount * (taxRate / 100);
+    
+    // Calcular o total
+    const total = baseAmount + taxAmount;
+    
+    // Atualizar os valores no item atual
+    currentItem.value.tax_amount = taxAmount.toFixed(2);
+    currentItem.value.total = total.toFixed(2);
+}
+
+function addItem() {
+    if (!isItemValid.value) return;
+    
+    // Calcular os totais antes de adicionar
+    calculateItemTotals();
+    
+    // Adicionar o item à lista
+    items.value.push({...currentItem.value});
+    
+    // Atualizar os totais da fatura
+    updateInvoiceTotals();
+    
+    // Limpar o formulário do item atual
+    currentItem.value = {
+        description: '',
+        quantity: 1,
+        unit_price: 0,
+        tax_rate: 23,
+        tax_amount: 0,
+        total: 0
+    };
+}
+
+function removeItem(index) {
+    items.value.splice(index, 1);
+    updateInvoiceTotals();
+}
+
+function updateInvoiceTotals() {
+    // Calcular totais da fatura
+    let totalTaxAmount = 0;
+    let totalAmount = 0;
+    
+    items.value.forEach(item => {
+        totalTaxAmount += Number(item.tax_amount);
+        totalAmount += Number(item.total);
+    });
+    
+    // Atualizar o formulário
+    form.tax_amount = totalTaxAmount.toFixed(2);
+    form.total_amount = totalAmount.toFixed(2);
+}
+
+function formatCurrency(value) {
+    // Forçar símbolo € antes do valor
+    return '€ ' + new Intl.NumberFormat('pt-PT', {
+        style: 'decimal',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value);
+}
 
 const handleFileChange = (event) => {
     form.file = event.target.files[0];
 };
 
 const submit = () => {
+    // Adicionar os itens ao formulário antes de enviar
+    form.items = items.value;
+    
     form.post(route('invoices.store'), {
         onSuccess: () => {
             form.reset();
+            items.value = [];
         },
     });
 };
+
+// Inicializar cálculos
+calculateItemTotals();
 </script> 

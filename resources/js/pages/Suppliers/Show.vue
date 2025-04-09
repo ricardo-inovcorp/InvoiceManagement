@@ -4,12 +4,12 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Detalhes do Fornecedor</h2>
         </template>
 
-        <Head :title="`Fornecedor - ${supplier.name}`" />
+        <Head :title="`Fornecedor - ${supplier.company_name || supplier.name}`" />
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="mb-6 flex justify-between items-center">
-                    <h3 class="text-lg font-medium">{{ supplier.name }}</h3>
+                    <h3 class="text-lg font-medium">{{ supplier.company_name || supplier.name }}</h3>
                     <div class="flex space-x-2">
                         <Link :href="route('suppliers.edit', supplier.id)">
                             <Button variant="outline">Editar</Button>
@@ -30,7 +30,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <h4 class="text-sm font-medium text-muted-foreground mb-1">Nome</h4>
-                                    <p>{{ supplier.name }}</p>
+                                    <p>{{ supplier.company_name || supplier.name }}</p>
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-medium text-muted-foreground mb-1">NIF</h4>
@@ -49,6 +49,14 @@
                                     <Badge :variant="supplier.active ? 'success' : 'destructive'">
                                         {{ supplier.active ? 'Ativo' : 'Inativo' }}
                                     </Badge>
+                                </div>
+                                <div v-if="supplier.sector">
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Setor de Atividade</h4>
+                                    <p>{{ supplier.sector ? supplier.sector.name : 'Não definido' }}</p>
+                                </div>
+                                <div v-if="supplier.organizationType">
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Tipo de Organização</h4>
+                                    <p>{{ supplier.organizationType ? supplier.organizationType.name : 'Não definido' }}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -71,11 +79,11 @@
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-medium text-muted-foreground mb-1">Concelho</h4>
-                                    <p>{{ supplier.county }}</p>
+                                    <p>{{ supplier.county && supplier.county.name ? supplier.county.name : 'Não definido' }}</p>
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-medium text-muted-foreground mb-1">Distrito</h4>
-                                    <p>{{ supplier.state }}</p>
+                                    <p>{{ supplier.district && supplier.district.name ? supplier.district.name : 'Não definido' }}</p>
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-medium text-muted-foreground mb-1">Código Postal</h4>

@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
+use App\Models\District;
+use App\Models\County;
+use App\Models\Sector;
+use App\Models\OrganizationType;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -27,7 +31,17 @@ class SupplierController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Suppliers/Create');
+        $districts = District::orderBy('name')->get();
+        $counties = County::orderBy('name')->get();
+        $sectors = Sector::orderBy('name')->get();
+        $organizationTypes = OrganizationType::orderBy('name')->get();
+        
+        return Inertia::render('Suppliers/Create', [
+            'districts' => $districts,
+            'counties' => $counties,
+            'sectors' => $sectors,
+            'organizationTypes' => $organizationTypes,
+        ]);
     }
 
     /**
@@ -38,15 +52,17 @@ class SupplierController extends Controller
         Log::info('Supplier store method called', $request->all());
         
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
             'document' => ['required', 'string', 'max:9', 'min:9', 'unique:suppliers', 'regex:/^[0-9]{9}$/'],
             'email' => 'required|email|unique:suppliers',
             'phone' => ['required', 'string', 'max:20', 'regex:/^(\+351)?[\s]?9[1236][0-9]{7}$/'],
             'address' => 'required|string|max:255',
             'city' => 'required|string|max:100',
-            'county' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
+            'county_id' => 'required|exists:counties,id',
+            'district_id' => 'required|exists:districts,id',
             'zip_code' => ['required', 'string', 'max:8', 'regex:/^[0-9]{4}-[0-9]{3}$/'],
+            'sector_id' => 'nullable|exists:sectors,id',
+            'organization_type_id' => 'nullable|exists:organization_types,id',
             'notes' => 'nullable|string',
             'active' => 'boolean'
         ], [
@@ -69,6 +85,9 @@ class SupplierController extends Controller
      */
     public function show(Supplier $supplier)
     {
+        // Carregar relacionamentos
+        $supplier->load(['invoices', 'district', 'county', 'sector', 'organizationType']);
+        
         return Inertia::render('Suppliers/Show', [
             'supplier' => $supplier
         ]);
@@ -79,8 +98,21 @@ class SupplierController extends Controller
      */
     public function edit(Supplier $supplier)
     {
+        // Carregar relacionamentos
+        $supplier->load(['district', 'county', 'sector', 'organizationType']);
+        
+        // Carregar dados para os selectboxes
+        $districts = District::orderBy('name')->get();
+        $counties = County::orderBy('name')->get();
+        $sectors = Sector::orderBy('name')->get();
+        $organizationTypes = OrganizationType::orderBy('name')->get();
+        
         return Inertia::render('Suppliers/Edit', [
-            'supplier' => $supplier
+            'supplier' => $supplier,
+            'districts' => $districts,
+            'counties' => $counties,
+            'sectors' => $sectors,
+            'organizationTypes' => $organizationTypes,
         ]);
     }
 
@@ -90,15 +122,17 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
             'document' => ['required', 'string', 'max:9', 'min:9', 'regex:/^[0-9]{9}$/', 'unique:suppliers,document,' . $supplier->id],
             'email' => 'required|email|unique:suppliers,email,' . $supplier->id,
             'phone' => ['required', 'string', 'max:20', 'regex:/^(\+351)?[\s]?9[1236][0-9]{7}$/'],
             'address' => 'required|string|max:255',
             'city' => 'required|string|max:100',
-            'county' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
+            'county_id' => 'required|exists:counties,id',
+            'district_id' => 'required|exists:districts,id',
             'zip_code' => ['required', 'string', 'max:8', 'regex:/^[0-9]{4}-[0-9]{3}$/'],
+            'sector_id' => 'nullable|exists:sectors,id',
+            'organization_type_id' => 'nullable|exists:organization_types,id',
             'notes' => 'nullable|string',
             'active' => 'boolean'
         ], [

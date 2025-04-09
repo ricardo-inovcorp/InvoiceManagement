@@ -21,15 +21,15 @@
                         <form @submit.prevent="submit" class="space-y-6">
                             <!-- Nome -->
                             <div>
-                                <Label for="name">Nome</Label>
+                                <Label for="company_name">Nome</Label>
                                 <Input
-                                    id="name"
-                                    v-model="form.name"
+                                    id="company_name"
+                                    v-model="form.company_name"
                                     type="text"
                                     required
                                 />
-                                <p v-if="form.errors.name" class="text-sm text-red-600 mt-1">
-                                    {{ form.errors.name }}
+                                <p v-if="form.errors.company_name" class="text-sm text-red-600 mt-1">
+                                    {{ form.errors.company_name }}
                                 </p>
                             </div>
 
@@ -105,29 +105,39 @@
 
                             <!-- Concelho -->
                             <div>
-                                <Label for="county">Concelho</Label>
-                                <Input
-                                    id="county"
-                                    v-model="form.county"
-                                    type="text"
+                                <Label for="county_id">Concelho</Label>
+                                <select
+                                    id="county_id"
+                                    v-model="form.county_id"
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     required
-                                />
-                                <p v-if="form.errors.county" class="text-sm text-red-600 mt-1">
-                                    {{ form.errors.county }}
+                                >
+                                    <option value="">Selecione um concelho</option>
+                                    <option v-for="county in counties" :key="county.id" :value="county.id">
+                                        {{ county.name }}
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.county_id" class="text-sm text-red-600 mt-1">
+                                    {{ form.errors.county_id }}
                                 </p>
                             </div>
 
                             <!-- Distrito -->
                             <div>
-                                <Label for="state">Distrito</Label>
-                                <Input
-                                    id="state"
-                                    v-model="form.state"
-                                    type="text"
+                                <Label for="district_id">Distrito</Label>
+                                <select
+                                    id="district_id"
+                                    v-model="form.district_id"
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     required
-                                />
-                                <p v-if="form.errors.state" class="text-sm text-red-600 mt-1">
-                                    {{ form.errors.state }}
+                                >
+                                    <option value="">Selecione um distrito</option>
+                                    <option v-for="district in districts" :key="district.id" :value="district.id">
+                                        {{ district.name }}
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.district_id" class="text-sm text-red-600 mt-1">
+                                    {{ form.errors.district_id }}
                                 </p>
                             </div>
 
@@ -143,6 +153,42 @@
                                 />
                                 <p v-if="form.errors.zip_code" class="text-sm text-red-600 mt-1">
                                     {{ form.errors.zip_code }}
+                                </p>
+                            </div>
+
+                            <!-- Setor de Atividade -->
+                            <div>
+                                <Label for="sector_id">Setor de Atividade</Label>
+                                <select
+                                    id="sector_id"
+                                    v-model="form.sector_id"
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <option value="">Selecione um setor</option>
+                                    <option v-for="sector in sectors" :key="sector.id" :value="sector.id">
+                                        {{ sector.name }}
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.sector_id" class="text-sm text-red-600 mt-1">
+                                    {{ form.errors.sector_id }}
+                                </p>
+                            </div>
+
+                            <!-- Tipo de Organização -->
+                            <div>
+                                <Label for="organization_type_id">Tipo de Organização</Label>
+                                <select
+                                    id="organization_type_id"
+                                    v-model="form.organization_type_id"
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <option value="">Selecione um tipo</option>
+                                    <option v-for="type in organizationTypes" :key="type.id" :value="type.id">
+                                        {{ type.name }}
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.organization_type_id" class="text-sm text-red-600 mt-1">
+                                    {{ form.errors.organization_type_id }}
                                 </p>
                             </div>
 
@@ -187,18 +233,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 
 const props = defineProps({
     auth: Object,
+    districts: Array,
+    counties: Array,
+    sectors: Array,
+    organizationTypes: Array,
 });
 
 const form = useForm({
-    name: '',
+    company_name: '',
     document: '',
     email: '',
     phone: '',
     address: '',
     city: '',
-    county: '',
-    state: '',
+    county_id: '',
+    district_id: '',
     zip_code: '',
+    sector_id: '',
+    organization_type_id: '',
     notes: '',
     active: true,
 });

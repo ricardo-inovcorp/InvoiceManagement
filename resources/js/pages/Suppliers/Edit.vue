@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Editar Fornecedor</h2>
         </template>
 
-        <Head :title="`Editar Fornecedor - ${supplier.name}`" />
+        <Head :title="`Editar Fornecedor - ${supplier.company_name || supplier.name}`" />
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -22,15 +22,15 @@
                             <!-- Dados do Fornecedor -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <Label for="name">Nome</Label>
+                                    <Label for="company_name">Nome</Label>
                                     <Input
-                                        id="name"
-                                        v-model="form.name"
+                                        id="company_name"
+                                        v-model="form.company_name"
                                         type="text"
                                         required
                                     />
-                                    <div v-if="form.errors.name" class="text-sm text-red-600 mt-1">
-                                        {{ form.errors.name }}
+                                    <div v-if="form.errors.company_name" class="text-sm text-red-600 mt-1">
+                                        {{ form.errors.company_name }}
                                     </div>
                                 </div>
 
@@ -119,16 +119,17 @@
 
                                     <div>
                                         <Label for="district_id">Distrito</Label>
-                                        <Select
+                                        <select
                                             id="district_id"
                                             v-model="form.district_id"
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                             required
                                         >
                                             <option value="">Selecione um distrito</option>
                                             <option v-for="district in districts" :key="district.id" :value="district.id">
                                                 {{ district.name }}
                                             </option>
-                                        </Select>
+                                        </select>
                                         <div v-if="form.errors.district_id" class="text-sm text-red-600 mt-1">
                                             {{ form.errors.district_id }}
                                         </div>
@@ -136,16 +137,17 @@
 
                                     <div>
                                         <Label for="county_id">Concelho</Label>
-                                        <Select
+                                        <select
                                             id="county_id"
                                             v-model="form.county_id"
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                             required
                                         >
                                             <option value="">Selecione um concelho</option>
                                             <option v-for="county in counties" :key="county.id" :value="county.id">
                                                 {{ county.name }}
                                             </option>
-                                        </Select>
+                                        </select>
                                         <div v-if="form.errors.county_id" class="text-sm text-red-600 mt-1">
                                             {{ form.errors.county_id }}
                                         </div>
@@ -159,15 +161,16 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <Label for="sector_id">Setor de Atividade</Label>
-                                        <Select
+                                        <select
                                             id="sector_id"
                                             v-model="form.sector_id"
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             <option value="">Selecione um setor</option>
                                             <option v-for="sector in sectors" :key="sector.id" :value="sector.id">
                                                 {{ sector.name }}
                                             </option>
-                                        </Select>
+                                        </select>
                                         <div v-if="form.errors.sector_id" class="text-sm text-red-600 mt-1">
                                             {{ form.errors.sector_id }}
                                         </div>
@@ -175,15 +178,16 @@
 
                                     <div>
                                         <Label for="organization_type_id">Tipo de Organização</Label>
-                                        <Select
+                                        <select
                                             id="organization_type_id"
                                             v-model="form.organization_type_id"
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             <option value="">Selecione um tipo</option>
                                             <option v-for="type in organizationTypes" :key="type.id" :value="type.id">
                                                 {{ type.name }}
                                             </option>
-                                        </Select>
+                                        </select>
                                         <div v-if="form.errors.organization_type_id" class="text-sm text-red-600 mt-1">
                                             {{ form.errors.organization_type_id }}
                                         </div>
@@ -240,7 +244,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const props = defineProps({
@@ -252,21 +255,21 @@ const props = defineProps({
     organizationTypes: Array,
 });
 
+// Convertemos os IDs para números para garantir compatibilidade
 const form = useForm({
-    name: props.supplier.name,
+    company_name: props.supplier.company_name || props.supplier.name,
     document: props.supplier.document,
     email: props.supplier.email,
     phone: props.supplier.phone,
     address: props.supplier.address,
     city: props.supplier.city,
-    county_id: props.supplier.county_id,
-    state: props.supplier.state,
-    district_id: props.supplier.district_id,
+    county_id: props.supplier.county_id ? Number(props.supplier.county_id) : '',
+    district_id: props.supplier.district_id ? Number(props.supplier.district_id) : '',
     zip_code: props.supplier.zip_code,
-    sector_id: props.supplier.sector_id,
-    organization_type_id: props.supplier.organization_type_id,
+    sector_id: props.supplier.sector_id ? Number(props.supplier.sector_id) : '',
+    organization_type_id: props.supplier.organization_type_id ? Number(props.supplier.organization_type_id) : '',
     notes: props.supplier.notes,
-    active: props.supplier.active,
+    active: Boolean(props.supplier.active),
     _method: 'PUT',
 });
 

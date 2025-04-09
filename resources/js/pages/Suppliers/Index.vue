@@ -20,11 +20,11 @@
                         <Table class="w-full">
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead class="whitespace-nowrap">Nome</TableHead>
+                                    <TableHead class="whitespace-nowrap">Empresa</TableHead>
                                     <TableHead class="whitespace-nowrap">NIF</TableHead>
                                     <TableHead class="whitespace-nowrap">Email</TableHead>
                                     <TableHead class="whitespace-nowrap">Telefone</TableHead>
-                                    <TableHead class="whitespace-nowrap">Endereço</TableHead>
+                                    <TableHead class="whitespace-nowrap">Morada</TableHead>
                                     <TableHead class="whitespace-nowrap">Cidade</TableHead>
                                     <TableHead class="whitespace-nowrap">Concelho</TableHead>
                                     <TableHead class="whitespace-nowrap">Distrito</TableHead>
@@ -50,8 +50,13 @@
                                             {{ supplier.active ? 'Ativo' : 'Inativo' }}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell class="max-w-xs truncate" :title="supplier.notes">
-                                        {{ supplier.notes }}
+                                    <TableCell class="max-w-xs truncate" :title="supplier.notes || 'No note to show'">
+                                        <template v-if="supplier.notes">
+                                            {{ supplier.notes }}
+                                        </template>
+                                        <template v-else>
+                                            No note to show
+                                        </template>
                                     </TableCell>
                                     <TableCell class="whitespace-nowrap">
                                         <div class="flex space-x-2">
