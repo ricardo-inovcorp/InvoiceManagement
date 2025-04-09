@@ -32,7 +32,7 @@
                             <TableBody>
                                 <TableRow v-for="invoice in invoices.data" :key="invoice.id">
                                     <TableCell class="whitespace-nowrap">{{ invoice.invoice_number }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ invoice.supplier ? invoice.supplier.name : '-' }}</TableCell>
+                                    <TableCell class="whitespace-nowrap">{{ invoice.supplier ? invoice.supplier.company_name : '-' }}</TableCell>
                                     <TableCell class="whitespace-nowrap">{{ formatDate(invoice.issue_date) }}</TableCell>
                                     <TableCell class="whitespace-nowrap">{{ formatDate(invoice.due_date) }}</TableCell>
                                     <TableCell class="whitespace-nowrap">{{ formatCurrency(invoice.total_amount) }}</TableCell>

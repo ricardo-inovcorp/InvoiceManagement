@@ -21,15 +21,15 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Informações Básicas -->
+                    <!-- Informações Gerais -->
                     <Card class="md:col-span-2">
                         <CardHeader>
-                            <CardTitle>Informações Básicas</CardTitle>
+                            <CardTitle>Informações Gerais</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Nome</h4>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Empresa</h4>
                                     <p>{{ supplier.company_name || supplier.name }}</p>
                                 </div>
                                 <div>
@@ -65,16 +65,16 @@
                     <!-- Informações de Endereço -->
                     <Card>
                         <CardHeader>
-                            <CardTitle>Endereço</CardTitle>
+                            <CardTitle>Informações de Morada</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div class="space-y-2">
                                 <div>
-                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Endereço</h4>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Morada</h4>
                                     <p>{{ supplier.address }}</p>
                                 </div>
                                 <div>
-                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Cidade</h4>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Localidade</h4>
                                     <p>{{ supplier.city }}</p>
                                 </div>
                                 <div>
