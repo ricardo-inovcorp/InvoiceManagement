@@ -1,5 +1,5 @@
 <template>
-    <AuthenticatedLayout :user="auth.user">
+    <AppLayout :user="auth.user">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Detalhes do Fornecedor</h2>
         </template>
@@ -8,97 +8,103 @@
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="space-y-6">
-                    <!-- Card de Informações do Fornecedor -->
-                    <Card>
+                <div class="mb-6 flex justify-between items-center">
+                    <h3 class="text-lg font-medium">{{ supplier.name }}</h3>
+                    <div class="flex space-x-2">
+                        <Link :href="route('suppliers.edit', supplier.id)">
+                            <Button variant="outline">Editar</Button>
+                        </Link>
+                        <Link :href="route('suppliers.index')">
+                            <Button variant="outline">Voltar</Button>
+                        </Link>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Informações Básicas -->
+                    <Card class="md:col-span-2">
                         <CardHeader>
-                            <div class="flex justify-between items-center">
-                                <CardTitle>Informações do Fornecedor</CardTitle>
-                                <div class="flex space-x-2">
-                                    <Link :href="route('suppliers.edit', supplier.id)">
-                                        <Button variant="outline">Editar</Button>
-                                    </Link>
-                                    <Link :href="route('suppliers.index')">
-                                        <Button variant="outline">Voltar</Button>
-                                    </Link>
-                                </div>
-                            </div>
+                            <CardTitle>Informações Básicas</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <h3 class="font-medium mb-2">Dados Principais</h3>
-                                    <dl class="space-y-2">
-                                        <div>
-                                            <dt class="text-sm text-gray-500">Nome</dt>
-                                            <dd class="font-medium">{{ supplier.name }}</dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-sm text-gray-500">NIF</dt>
-                                            <dd class="font-medium">{{ supplier.document }}</dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-sm text-gray-500">Email</dt>
-                                            <dd class="font-medium">{{ supplier.email }}</dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-sm text-gray-500">Telefone</dt>
-                                            <dd class="font-medium">{{ supplier.phone }}</dd>
-                                        </div>
-                                    </dl>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Nome</h4>
+                                    <p>{{ supplier.name }}</p>
                                 </div>
-
                                 <div>
-                                    <h3 class="font-medium mb-2">Morada e Informações Adicionais</h3>
-                                    <dl class="space-y-2">
-                                        <div>
-                                            <dt class="text-sm text-gray-500">Morada</dt>
-                                            <dd class="font-medium">{{ supplier.address }}</dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-sm text-gray-500">Código Postal</dt>
-                                            <dd class="font-medium">{{ supplier.zip_code }}</dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-sm text-gray-500">Localidade</dt>
-                                            <dd class="font-medium">{{ supplier.city }}</dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-sm text-gray-500">Concelho</dt>
-                                            <dd class="font-medium">{{ supplier.county }}</dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-sm text-gray-500">Distrito</dt>
-                                            <dd class="font-medium">{{ supplier.state }}</dd>
-                                        </div>
-                                        <div v-if="supplier.notes">
-                                            <dt class="text-sm text-gray-500">Observações</dt>
-                                            <dd class="font-medium">{{ supplier.notes }}</dd>
-                                        </div>
-                                    </dl>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">NIF</h4>
+                                    <p>{{ supplier.document }}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">E-mail</h4>
+                                    <p>{{ supplier.email }}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Telefone</h4>
+                                    <p>{{ supplier.phone }}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Status</h4>
+                                    <Badge :variant="supplier.active ? 'success' : 'destructive'">
+                                        {{ supplier.active ? 'Ativo' : 'Inativo' }}
+                                    </Badge>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <!-- Card de Faturas do Fornecedor -->
+                    <!-- Informações de Endereço -->
                     <Card>
                         <CardHeader>
-                            <div class="flex justify-between items-center">
-                                <CardTitle>Faturas do Fornecedor</CardTitle>
-                                <Link :href="route('invoices.create', { supplier_id: supplier.id })">
-                                    <Button>Nova Fatura</Button>
-                                </Link>
-                            </div>
+                            <CardTitle>Endereço</CardTitle>
                         </CardHeader>
                         <CardContent>
+                            <div class="space-y-2">
+                                <div>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Endereço</h4>
+                                    <p>{{ supplier.address }}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Cidade</h4>
+                                    <p>{{ supplier.city }}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Concelho</h4>
+                                    <p>{{ supplier.county }}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Distrito</h4>
+                                    <p>{{ supplier.state }}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-muted-foreground mb-1">Código Postal</h4>
+                                    <p>{{ supplier.zip_code }}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <!-- Histórico de Faturas -->
+                <Card class="mt-6">
+                    <CardHeader>
+                        <div class="flex justify-between items-center">
+                            <CardTitle>Faturas deste Fornecedor</CardTitle>
+                            <Link :href="route('invoices.create', { supplier_id: supplier.id })">
+                                <Button>Nova Fatura</Button>
+                            </Link>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div v-if="supplier.invoices && supplier.invoices.length > 0">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Número</TableHead>
                                         <TableHead>Data de Emissão</TableHead>
                                         <TableHead>Data de Vencimento</TableHead>
-                                        <TableHead>Valor Total</TableHead>
+                                        <TableHead>Total</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Ações</TableHead>
                                     </TableRow>
@@ -110,17 +116,12 @@
                                         <TableCell>{{ formatDate(invoice.due_date) }}</TableCell>
                                         <TableCell>{{ formatCurrency(invoice.total_amount) }}</TableCell>
                                         <TableCell>
-                                            <Badge :variant="getStatusBadgeVariant(invoice.status)">
+                                            <Badge :variant="getStatusVariant(invoice.status)">
                                                 {{ getStatusLabel(invoice.status) }}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
                                             <div class="flex space-x-2">
-                                                <Link :href="route('invoices.edit', invoice.id)">
-                                                    <Button variant="outline" size="sm">
-                                                        Editar
-                                                    </Button>
-                                                </Link>
                                                 <Link :href="route('invoices.show', invoice.id)">
                                                     <Button variant="outline" size="sm">
                                                         Detalhes
@@ -131,20 +132,33 @@
                                     </TableRow>
                                 </TableBody>
                             </Table>
-                        </CardContent>
-                    </Card>
-                </div>
+                        </div>
+                        <div v-else class="text-center py-4 text-muted-foreground">
+                            Nenhuma fatura encontrada para este fornecedor.
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Notas -->
+                <Card class="mt-6" v-if="supplier.notes">
+                    <CardHeader>
+                        <CardTitle>Notas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="whitespace-pre-wrap">{{ supplier.notes }}</p>
+                    </CardContent>
+                </Card>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>
 
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Button } from '@/Components/ui/button';
-import { Badge } from '@/Components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Table,
     TableBody,
@@ -152,7 +166,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/Components/ui/table';
+} from '@/components/ui/table';
 
 const props = defineProps({
     auth: Object,
@@ -162,40 +176,36 @@ const props = defineProps({
     },
 });
 
-const getStatusBadgeVariant = (status) => {
-    switch (status) {
-        case 'paid':
-            return 'success';
-        case 'pending':
-            return 'warning';
-        case 'overdue':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-};
+function formatDate(date) {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('pt-BR');
+}
 
-const getStatusLabel = (status) => {
-    switch (status) {
-        case 'paid':
-            return 'Pago';
-        case 'pending':
-            return 'Pendente';
-        case 'overdue':
-            return 'Atrasado';
-        default:
-            return 'Cancelado';
-    }
-};
-
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString();
-};
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-PT', {
+function formatCurrency(value) {
+    if (!value) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
-        currency: 'EUR'
+        currency: 'BRL',
     }).format(value);
-};
+}
+
+function getStatusVariant(status) {
+    switch (status) {
+        case 'paid': return 'success';
+        case 'pending': return 'warning';
+        case 'overdue': return 'destructive';
+        case 'cancelled': return 'secondary';
+        default: return 'default';
+    }
+}
+
+function getStatusLabel(status) {
+    switch (status) {
+        case 'paid': return 'Pago';
+        case 'pending': return 'Pendente';
+        case 'overdue': return 'Atrasado';
+        case 'cancelled': return 'Cancelado';
+        default: return status;
+    }
+}
 </script> 

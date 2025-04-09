@@ -1,5 +1,5 @@
 <template>
-    <AuthenticatedLayout :user="auth.user">
+    <AppLayout :user="auth.user">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Editar Fatura</h2>
         </template>
@@ -171,6 +171,9 @@
                                 <p v-if="form.errors.file" class="text-sm text-red-600 mt-1">
                                     {{ form.errors.file }}
                                 </p>
+                                <div v-if="invoice.file_path" class="mt-2">
+                                    <p class="text-sm">Arquivo atual: <a :href="invoice.file_path" target="_blank" class="text-blue-600 hover:underline">Ver arquivo</a></p>
+                                </div>
                             </div>
 
                             <!-- Observações -->
@@ -200,18 +203,18 @@
                 </Card>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Button } from '@/Components/ui/button';
-import { Input } from '@/Components/ui/input';
-import { Label } from '@/Components/ui/label';
-import { Textarea } from '@/Components/ui/textarea';
-import { Select } from '@/Components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const props = defineProps({
     auth: Object,
@@ -237,6 +240,7 @@ const form = useForm({
     payment_date: props.invoice.payment_date,
     file: null,
     notes: props.invoice.notes,
+    _method: 'PUT',
 });
 
 const handleFileChange = (event) => {
@@ -244,10 +248,6 @@ const handleFileChange = (event) => {
 };
 
 const submit = () => {
-    form.post(route('invoices.update', props.invoice.id), {
-        onSuccess: () => {
-            form.reset();
-        },
-    });
+    form.post(route('invoices.update', props.invoice.id));
 };
 </script> 
