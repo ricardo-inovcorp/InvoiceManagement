@@ -54,7 +54,7 @@ const statusChartOptions = ref({
   chart: {
     type: 'donut',
     height: 300,
-    foreColor: '#e2e8f0',
+    foreColor: '#94a3b8',
   },
   labels: ['Pago', 'Pendente', 'Atrasado', 'Cancelado'],
   colors: ['#10b981', '#f59e0b', '#ef4444', '#6b7280'],
@@ -63,7 +63,7 @@ const statusChartOptions = ref({
     fontSize: '14px',
     fontWeight: 600,
     labels: {
-      colors: '#e2e8f0',
+      colors: '#94a3b8',
     },
     markers: {
       fillColors: ['#10b981', '#f59e0b', '#ef4444', '#6b7280'],
@@ -94,9 +94,9 @@ const statusChartOptions = ref({
             show: true,
             label: 'Total',
             formatter: function(w) {
-              return formatCurrency(w.globals.seriesTotals.reduce((a, b) => a + b, 0));
+              return w.globals.seriesTotals.reduce((a, b) => a + b, 0).toString();
             },
-            color: '#e2e8f0',
+            color: '#94a3b8',
           },
         },
       },
@@ -111,7 +111,7 @@ const monthlyChartOptions = ref({
     toolbar: {
       show: false,
     },
-    foreColor: '#e2e8f0',
+    foreColor: '#94a3b8',
   },
   dataLabels: {
     enabled: false,
@@ -133,7 +133,7 @@ const monthlyChartOptions = ref({
     categories: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
     labels: {
       style: {
-        colors: '#e2e8f0',
+        colors: '#94a3b8',
         fontWeight: 600,
       },
     },
@@ -144,7 +144,7 @@ const monthlyChartOptions = ref({
         return formatCurrency(value);
       },
       style: {
-        colors: ['#e2e8f0'],
+        colors: ['#94a3b8'],
         fontWeight: 600,
       },
     },
@@ -177,7 +177,7 @@ const monthlyChartOptions = ref({
     fontSize: '14px',
     fontWeight: 600,
     labels: {
-      colors: '#e2e8f0',
+      colors: '#94a3b8',
     },
     markers: {
       fillColors: ['#10b981', '#f59e0b', '#ef4444'],

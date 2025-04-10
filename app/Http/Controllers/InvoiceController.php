@@ -20,6 +20,9 @@ class InvoiceController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->input('search');
+        $status = $request->input('status');
+        $dueDateStart = $request->input('due_date_start');
+        $dueDateEnd = $request->input('due_date_end');
         
         $query = Invoice::with('supplier');
         
@@ -33,13 +36,31 @@ class InvoiceController extends Controller
             });
         }
         
+        // Filtrar por status
+        if ($status) {
+            $query->where('status', $status);
+        }
+        
+        // Filtrar por data de vencimento - início
+        if ($dueDateStart) {
+            $query->whereDate('due_date', '>=', $dueDateStart);
+        }
+        
+        // Filtrar por data de vencimento - fim
+        if ($dueDateEnd) {
+            $query->whereDate('due_date', '<=', $dueDateEnd);
+        }
+        
         $invoices = $query->latest()->paginate(10)
                         ->withQueryString(); // Mantém os parâmetros de query na paginação
         
         return Inertia::render('Invoices/Index', [
             'invoices' => $invoices,
             'filters' => [
-                'search' => $search
+                'search' => $search,
+                'status' => $status,
+                'due_date_start' => $dueDateStart,
+                'due_date_end' => $dueDateEnd
             ]
         ]);
     }

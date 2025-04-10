@@ -14,27 +14,101 @@
             <!-- Barra de pesquisa -->
             <div class="mb-6">
                 <form @submit.prevent="search">
-                    <div class="flex space-x-2">
-                        <div class="md:w-1/2 lg:w-1/3">
-                            <Input 
-                                type="text" 
-                                placeholder="Pesquisar por fornecedor ou número da fatura..." 
-                                v-model="form.search"
-                                class="w-full"
-                            />
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex space-x-2">
+                            <div class="md:w-1/2 lg:w-1/3">
+                                <Input 
+                                    type="text" 
+                                    placeholder="Pesquisar por fornecedor ou número da fatura..." 
+                                    v-model="form.search"
+                                    class="w-full"
+                                />
+                            </div>
+                            <Button type="submit">Pesquisar</Button>
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                @click="resetSearch"
+                                v-if="hasFilters"
+                            >
+                                Limpar
+                            </Button>
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                @click="showFilters = !showFilters"
+                            >
+                                {{ showFilters ? 'Esconder Filtros' : 'Filtros Avançados' }}
+                            </Button>
+                            <Link :href="route('invoices.create')">
+                                <Button>Nova Fatura</Button>
+                            </Link>
                         </div>
-                        <Button type="submit">Pesquisar</Button>
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            @click="resetSearch"
-                            v-if="form.search"
-                        >
-                            Limpar
-                        </Button>
-                        <Link :href="route('invoices.create')">
-                            <Button>Nova Fatura</Button>
-                        </Link>
+                        
+                        <!-- Filtros avançados -->
+                        <div v-if="showFilters" class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <Label for="due_date_start">Vencimento - Início</Label>
+                                    <Input 
+                                        id="due_date_start" 
+                                        type="date" 
+                                        v-model="form.due_date_start"
+                                        class="w-full"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <Label for="due_date_end">Vencimento - Fim</Label>
+                                    <Input 
+                                        id="due_date_end" 
+                                        type="date" 
+                                        v-model="form.due_date_end"
+                                        class="w-full"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <Label for="issue_date_start">Emissão - Início</Label>
+                                    <Input 
+                                        id="issue_date_start" 
+                                        type="date" 
+                                        v-model="form.issue_date_start"
+                                        class="w-full"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <Label for="issue_date_end">Emissão - Fim</Label>
+                                    <Input 
+                                        id="issue_date_end" 
+                                        type="date" 
+                                        v-model="form.issue_date_end"
+                                        class="w-full"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <Label for="status">Status</Label>
+                                    <Select 
+                                        id="status" 
+                                        v-model="form.status"
+                                        class="bg-black text-white"
+                                        :options="[
+                                            { value: '', label: 'Todos' },
+                                            { value: 'pending', label: 'Pendente' },
+                                            { value: 'paid', label: 'Pago' },
+                                            { value: 'overdue', label: 'Atrasado' },
+                                            { value: 'cancelled', label: 'Cancelado' }
+                                        ]"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -97,7 +171,7 @@
 
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { reactive, ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -112,6 +186,8 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import Pagination from '@/Components/Pagination.vue';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 
 const props = defineProps({
     auth: Object,
@@ -122,18 +198,40 @@ const props = defineProps({
     filters: {
         type: Object,
         default: () => ({
-            search: ''
+            search: '',
+            status: '',
+            due_date_start: '',
+            due_date_end: '',
+            issue_date_start: '',
+            issue_date_end: ''
         })
     }
 });
 
 const form = reactive({
     search: props.filters.search || '',
+    status: props.filters.status || '',
+    due_date_start: props.filters.due_date_start || '',
+    due_date_end: props.filters.due_date_end || '',
+    issue_date_start: props.filters.issue_date_start || '',
+    issue_date_end: props.filters.issue_date_end || ''
+});
+
+const showFilters = ref(false);
+
+const hasFilters = computed(() => {
+    return form.search || form.status || form.due_date_start || form.due_date_end || 
+           form.issue_date_start || form.issue_date_end;
 });
 
 function search() {
     router.get(route('invoices.index'), {
         search: form.search,
+        status: form.status,
+        due_date_start: form.due_date_start,
+        due_date_end: form.due_date_end,
+        issue_date_start: form.issue_date_start,
+        issue_date_end: form.issue_date_end
     }, {
         preserveState: true,
         preserveScroll: true,
@@ -142,6 +240,11 @@ function search() {
 
 function resetSearch() {
     form.search = '';
+    form.status = '';
+    form.due_date_start = '';
+    form.due_date_end = '';
+    form.issue_date_start = '';
+    form.issue_date_end = '';
     router.get(route('invoices.index'), {}, {
         preserveState: true,
         preserveScroll: true,
