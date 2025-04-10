@@ -17,13 +17,30 @@ class InvoiceController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $invoices = Invoice::with('supplier')
-            ->latest()
-            ->paginate(10);
+        $search = $request->input('search');
+        
+        $query = Invoice::with('supplier');
+        
+        // Filtrar por termo de pesquisa se fornecido
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhereHas('supplier', function($query) use ($search) {
+                      $query->where('company_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        $invoices = $query->latest()->paginate(10)
+                        ->withQueryString(); // Mantém os parâmetros de query na paginação
+        
         return Inertia::render('Invoices/Index', [
-            'invoices' => $invoices
+            'invoices' => $invoices,
+            'filters' => [
+                'search' => $search
+            ]
         ]);
     }
 

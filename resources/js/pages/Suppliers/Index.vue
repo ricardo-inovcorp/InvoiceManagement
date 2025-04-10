@@ -8,10 +8,35 @@
 
         <div class="w-full py-4">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-medium">Lista de Fornecedores</h3>
-                <Link :href="route('suppliers.create')">
-                    <Button>Novo Fornecedor</Button>
-                </Link>
+                <h3 class="text-lg font-medium">Fornecedores</h3>
+            </div>
+
+            <!-- Barra de pesquisa -->
+            <div class="mb-6">
+                <form @submit.prevent="search">
+                    <div class="flex space-x-2">
+                        <div class="md:w-1/2 lg:w-1/3">
+                            <Input 
+                                type="text" 
+                                placeholder="Pesquisar por nome da empresa ou NIF..." 
+                                v-model="form.search"
+                                class="w-full"
+                            />
+                        </div>
+                        <Button type="submit">Pesquisar</Button>
+                        <Button 
+                            type="button" 
+                            variant="outline" 
+                            @click="resetSearch"
+                            v-if="form.search"
+                        >
+                            Limpar
+                        </Button>
+                        <Link :href="route('suppliers.create')">
+                            <Button>Novo Fornecedor</Button>
+                        </Link>
+                    </div>
+                </form>
             </div>
 
             <Card class="w-full">
@@ -88,9 +113,11 @@
 </template>
 
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { reactive } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -109,7 +136,34 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    filters: {
+        type: Object,
+        default: () => ({
+            search: ''
+        })
+    }
 });
+
+const form = reactive({
+    search: props.filters.search || '',
+});
+
+function search() {
+    router.get(route('suppliers.index'), {
+        search: form.search,
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+}
+
+function resetSearch() {
+    form.search = '';
+    router.get(route('suppliers.index'), {}, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+}
 </script>
 
 <style scoped>

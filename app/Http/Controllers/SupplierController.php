@@ -18,11 +18,28 @@ class SupplierController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $suppliers = Supplier::latest()->paginate(10);
+        $search = $request->input('search');
+        
+        $query = Supplier::query();
+        
+        // Filtrar por termo de pesquisa se fornecido
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('company_name', 'like', "%{$search}%")
+                  ->orWhere('document', 'like', "%{$search}%");
+            });
+        }
+        
+        $suppliers = $query->latest()->paginate(10)
+                            ->withQueryString(); // Mantém os parâmetros de query na paginação
+        
         return Inertia::render('Suppliers/Index', [
-            'suppliers' => $suppliers
+            'suppliers' => $suppliers,
+            'filters' => [
+                'search' => $search
+            ]
         ]);
     }
 
