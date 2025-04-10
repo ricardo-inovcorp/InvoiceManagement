@@ -52,7 +52,7 @@
                                 </div>
                                 <div>
                                     <dt class="text-sm font-medium text-muted-foreground mb-1">Valor Base</dt>
-                                    <dd>{{ formatCurrency(invoice.base_amount) }}</dd>
+                                    <dd>{{ formatCurrency(calculateBaseAmount()) }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-sm font-medium text-muted-foreground mb-1">Valor do Imposto</dt>
@@ -150,7 +150,7 @@
                                     <div class="w-full max-w-xs">
                                         <div class="flex justify-between py-2">
                                             <span class="font-medium">Subtotal:</span>
-                                            <span>{{ formatCurrency(invoice.base_amount) }}</span>
+                                            <span>{{ formatCurrency(calculateBaseAmount()) }}</span>
                                         </div>
                                         <div class="flex justify-between py-2 border-t border-gray-200">
                                             <span class="font-medium">Impostos:</span>
@@ -204,11 +204,16 @@ function formatDate(date) {
 
 function formatCurrency(value) {
     if (value === null || value === undefined) return '€ 0,00';
-    return '€ ' + new Intl.NumberFormat('pt-PT', {
+    
+    // Formata com a localização correta
+    const formatted = new Intl.NumberFormat('pt-PT', {
         style: 'decimal',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(value);
+    
+    // Retorna com o símbolo € no início
+    return `€ ${formatted}`;
 }
 
 function getBadgeVariant(status) {
@@ -239,5 +244,29 @@ function getStatusText(status) {
         default:
             return status;
     }
+}
+
+function calculateBaseAmount() {
+    // Se o valor base já estiver definido, usá-lo
+    if (props.invoice.base_amount && props.invoice.base_amount > 0) {
+        return props.invoice.base_amount;
+    }
+    
+    // Se não, tentar calcular a partir do total e do imposto
+    if (props.invoice.total_amount && props.invoice.tax_amount) {
+        return props.invoice.total_amount - props.invoice.tax_amount;
+    }
+    
+    // Se não for possível, calcular a partir dos itens
+    if (props.invoice.items && props.invoice.items.length > 0) {
+        return props.invoice.items.reduce((sum, item) => {
+            // Base do item = preço unitário * quantidade
+            const itemBase = (Number(item.unit_price) || 0) * (Number(item.quantity) || 0);
+            return sum + itemBase;
+        }, 0);
+    }
+    
+    // Se nada funcionar, retornar 0
+    return 0;
 }
 </script> 

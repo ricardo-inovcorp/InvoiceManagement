@@ -80,7 +80,7 @@
                                 <Label for="total_amount">Valor da Fatura</Label>
                                 <Input
                                     id="total_amount"
-                                    :value="form.total_amount ? `€ ${form.total_amount}` : '€ 0,00'"
+                                    :value="form.total_amount ? formatCurrency(form.total_amount) : '€ 0,00'"
                                     type="text"
                                     required
                                     readonly
@@ -95,7 +95,7 @@
                                 <Label for="tax_amount">Valor do Imposto</Label>
                                 <Input
                                     id="tax_amount"
-                                    :value="form.tax_amount ? `€ ${form.tax_amount}` : '€ 0,00'"
+                                    :value="form.tax_amount ? formatCurrency(form.tax_amount) : '€ 0,00'"
                                     type="text"
                                     required
                                     readonly
@@ -288,7 +288,7 @@
                                         <Label for="item_tax_amount">Valor do Imposto</Label>
                                         <Input
                                             id="item_tax_amount"
-                                            :value="currentItem.tax_amount ? `€ ${currentItem.tax_amount}` : '€ 0,00'"
+                                            :value="currentItem.tax_amount ? formatCurrency(currentItem.tax_amount) : '€ 0,00'"
                                             type="text"
                                             readonly
                                         />
@@ -297,7 +297,7 @@
                                         <Label for="item_total">Total</Label>
                                         <Input
                                             id="item_total"
-                                            :value="currentItem.total ? `€ ${currentItem.total}` : '€ 0,00'"
+                                            :value="currentItem.total ? formatCurrency(currentItem.total) : '€ 0,00'"
                                             type="text"
                                             readonly
                                         />
@@ -467,28 +467,34 @@ function removeItem(index) {
 function updateInvoiceTotals() {
     // Calcular totais da fatura
     let totalTaxAmount = 0;
-    let totalAmount = 0;
+    let totalBaseAmount = 0;
     
     items.value.forEach(item => {
-        totalTaxAmount += Number(item.tax_amount);
-        totalAmount += Number(item.total);
+        const taxAmount = Number(item.tax_amount) || 0;
+        const total = Number(item.total) || 0;
+        
+        totalTaxAmount += taxAmount;
+        totalBaseAmount += (total - taxAmount);
     });
     
     // Atualizar o formulário
     form.tax_amount = totalTaxAmount.toFixed(2);
-    form.total_amount = totalAmount.toFixed(2);
+    form.total_amount = totalBaseAmount.toFixed(2); // O total_amount é o valor base sem impostos
 }
 
 function formatCurrency(value) {
-    // Forçar símbolo € antes do valor
-    return '€ ' + new Intl.NumberFormat('pt-PT', {
+    // Formata com a localização correta
+    const formatted = new Intl.NumberFormat('pt-PT', {
         style: 'decimal',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(value);
+    
+    // Retorna com o símbolo € no início
+    return `€ ${formatted}`;
 }
 
-// Carregar itens existentes da fatura
+// Inicializar cálculos e totais quando os itens forem carregados
 onMounted(() => {
     if (props.invoice.items && props.invoice.items.length > 0) {
         // Se já tiver itens, carregá-los
@@ -501,11 +507,39 @@ onMounted(() => {
             tax_amount: item.tax_amount,
             total: item.total_price || (Number(item.unit_price) * Number(item.quantity) + Number(item.tax_amount))
         }));
-    } else {
-        // Se não tiver itens, inicializar os totais da fatura
+        
+        // Garantir que os totais sejam atualizados no formulário
         updateInvoiceTotals();
+    } else {
+        // Se não houver itens, mas tiver valores de imposto e total, mantê-los
+        if (props.invoice.tax_amount) {
+            form.tax_amount = props.invoice.tax_amount;
+        }
+        if (props.invoice.total_amount) {
+            form.total_amount = props.invoice.total_amount;
+        }
     }
+    
+    // Certificar-se de que o valor do imposto seja pelo menos o valor total dos impostos dos itens
+    recalculateTaxAmount();
 });
+
+// Adicionar função para recalcular o valor total do imposto
+function recalculateTaxAmount() {
+    // Se há itens, calcular o valor total do imposto
+    if (props.invoice.items && props.invoice.items.length > 0) {
+        let totalTaxAmount = 0;
+        
+        props.invoice.items.forEach(item => {
+            totalTaxAmount += Number(item.tax_amount || 0);
+        });
+        
+        // Só atualizar se o valor calculado for maior que zero
+        if (totalTaxAmount > 0) {
+            form.tax_amount = totalTaxAmount.toFixed(2);
+        }
+    }
+}
 
 const handleFileChange = (event) => {
     form.file = event.target.files[0];
