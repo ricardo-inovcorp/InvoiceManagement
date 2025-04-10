@@ -11,6 +11,8 @@ import CardFooter from '@/Components/ui/card/CardFooter.vue';
 import Badge from '@/Components/ui/badge/Badge.vue';
 import Icon from '@/Components/Icon.vue';
 import VueApexCharts from 'vue3-apexcharts';
+import { Link } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 
 // Definir propriedades
 const props = defineProps<{
@@ -226,6 +228,63 @@ onMounted(() => {
     ];
   }
 });
+
+// Função para exportar dados para CSV
+const downloadCSV = () => {
+  // Cabeçalho do CSV
+  let csvContent = "data:text/csv;charset=utf-8,";
+  
+  // Adiciona informações de resumo
+  csvContent += "Tipo,Quantidade,Valor Total\r\n";
+  csvContent += `Pendentes,${props.stats?.pending?.count || 0},${props.stats?.pending?.total || 0}\r\n`;
+  csvContent += `Vencidas,${props.stats?.overdue?.count || 0},${props.stats?.overdue?.total || 0}\r\n`;
+  csvContent += `Próximos 7 dias,${props.stats?.nextWeek?.count || 0},${props.stats?.nextWeek?.total || 0}\r\n`;
+  csvContent += `Pagas,${props.stats?.paid?.count || 0},${props.stats?.paid?.total || 0}\r\n\r\n`;
+  
+  // Adiciona dados de status
+  if (props.invoicesByStatus && props.invoicesByStatus.length > 0) {
+    csvContent += "Status,Quantidade\r\n";
+    props.invoicesByStatus.forEach(item => {
+      csvContent += `${item.status},${item.count}\r\n`;
+    });
+    csvContent += "\r\n";
+  }
+  
+  // Adiciona dados mensais
+  if (props.monthlyData && props.monthlyData.length > 0) {
+    csvContent += "Mês,Pagas,Pendentes,Vencidas\r\n";
+    props.monthlyData.forEach(item => {
+      csvContent += `${item.month},${item.paid},${item.pending},${item.overdue}\r\n`;
+    });
+    csvContent += "\r\n";
+  }
+  
+  // Adiciona dados de fornecedores
+  if (props.topSuppliers && props.topSuppliers.length > 0) {
+    csvContent += "Fornecedor,Quantidade,Valor Total\r\n";
+    props.topSuppliers.forEach(supplier => {
+      csvContent += `${supplier.name},${supplier.count},${supplier.total}\r\n`;
+    });
+    csvContent += "\r\n";
+  }
+  
+  // Adiciona alertas do dia
+  if (props.alertsToday && props.alertsToday.length > 0) {
+    csvContent += "Fatura,Fornecedor,Valor Total\r\n";
+    props.alertsToday.forEach(alert => {
+      csvContent += `${alert.invoice_number},${alert.supplier},${alert.total}\r\n`;
+    });
+  }
+  
+  // Cria elemento para download
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `dashboard_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 </script>
 
 <template>
@@ -233,6 +292,14 @@ onMounted(() => {
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+      <!-- Botão de download CSV -->
+      <div class="flex justify-end">
+        <Button @click="downloadCSV" class="flex items-center gap-2">
+          <Icon name="lucide:download" class="h-4 w-4" />
+          Exportar CSV
+        </Button>
+      </div>
+      
       <!-- Cards de resumo -->
       <div class="grid auto-rows-min gap-4 md:grid-cols-4">
         <!-- Pendentes -->
@@ -360,8 +427,10 @@ onMounted(() => {
             <div class="space-y-4">
               <div v-for="(alert, index) in alertsToday || []" :key="index" class="flex items-center justify-between">
                 <div>
-                  <div class="font-medium">{{ alert.invoice_number }}</div>
-                  <div class="text-xs text-muted-foreground">{{ alert.supplier }}</div>
+                  <Link :href="route('invoices.show', alert.id)" class="hover:underline">
+                    <div class="font-medium">{{ alert.invoice_number }}</div>
+                    <div class="text-xs text-muted-foreground">{{ alert.supplier }}</div>
+                  </Link>
                 </div>
                 <div class="font-semibold">{{ formatCurrency(alert.total) }}</div>
                 <Badge variant="destructive">Vence Hoje</Badge>
@@ -372,9 +441,9 @@ onMounted(() => {
             </div>
           </CardContent>
           <CardFooter v-if="alertsToday && alertsToday.length > 0">
-            <a href="/invoices" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+            <Link :href="route('invoices.index')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
               Ver todas as faturas →
-            </a>
+            </Link>
           </CardFooter>
         </Card>
       </div>
