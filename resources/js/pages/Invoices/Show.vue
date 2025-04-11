@@ -12,12 +12,15 @@
                 <div class="mb-6 flex justify-between items-center">
                     <h3 class="text-lg font-medium">Fatura #{{ invoice.invoice_number }}</h3>
                     <div class="flex space-x-2">
-                        <Link :href="route('invoices.edit', invoice.id)">
-                            <Button variant="outline">Editar</Button>
-                        </Link>
                         <Link :href="route('invoices.index')">
                             <Button variant="outline">Voltar</Button>
                         </Link>
+                        <Link :href="route('invoices.edit', invoice.id)">
+                            <Button variant="outline">Editar</Button>
+                        </Link>
+                        <Button variant="destructive" @click="showDeleteModal = true">
+                            Excluir
+                        </Button>
                     </div>
                 </div>
 
@@ -71,10 +74,10 @@
                                     <dd>{{ formatDate(invoice.payment_date) || '-' }}</dd>
                                 </div>
                                 <div class="col-span-2">
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Arquivo da Fatura</dt>
+                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Ficheiro da Fatura</dt>
                                     <dd v-if="invoice.file_path">
-                                        <a :href="invoice.file_path" target="_blank" class="text-blue-600 hover:underline flex items-center">
-                                            <span class="mr-1">Visualizar arquivo</span>
+                                        <a :href="route('invoices.view-file', invoice.id)" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                                            <span class="mr-1">Visualizar Ficheiro</span>
                                         </a>
                                     </dd>
                                     <dd v-else>Nenhum arquivo anexado</dd>
@@ -171,11 +174,29 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal de confirmação para excluir -->
+        <Dialog :open="showDeleteModal" @update:open="showDeleteModal = $event">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Confirmar exclusão</DialogTitle>
+                    <DialogDescription>
+                        Você tem certeza que deseja excluir a fatura #{{ invoice.invoice_number }}?<br>
+                        Esta ação não poderá ser desfeita.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" @click="showDeleteModal = false">Cancelar</Button>
+                    <Button variant="destructive" @click="deleteInvoice">Excluir</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>
 
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -188,6 +209,14 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 const props = defineProps({
     auth: Object,
@@ -196,6 +225,8 @@ const props = defineProps({
         required: true,
     },
 });
+
+const showDeleteModal = ref(false);
 
 function formatDate(date) {
     if (!date) return '-';
@@ -268,5 +299,13 @@ function calculateBaseAmount() {
     
     // Se nada funcionar, retornar 0
     return 0;
+}
+
+function deleteInvoice() {
+    router.delete(route('invoices.destroy', props.invoice.id), {
+        onSuccess: () => {
+            showDeleteModal.value = false;
+        }
+    });
 }
 </script> 

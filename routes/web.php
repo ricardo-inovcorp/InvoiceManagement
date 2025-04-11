@@ -7,6 +7,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -25,6 +26,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rotas de Faturas
     Route::resource('invoices', InvoiceController::class);
+    
+    // Rota para visualizar arquivo da fatura
+    Route::get('/view-invoice-file/{invoice}', function (App\Models\Invoice $invoice) {
+        if (!$invoice->file_path || !Storage::exists($invoice->file_path)) {
+            abort(404, 'Arquivo não encontrado');
+        }
+        
+        return response()->file(Storage::path($invoice->file_path));
+    })->name('invoices.view-file');
 
     // Rotas de Itens de Fatura
     Route::resource('invoices.items', InvoiceItemController::class)->shallow();

@@ -172,7 +172,7 @@
 
                             <!-- Arquivo -->
                             <div>
-                                <Label for="file">Arquivo da Fatura</Label>
+                                <Label for="file">Ficheiro da Fatura</Label>
                                 <Input
                                     id="file"
                                     type="file"

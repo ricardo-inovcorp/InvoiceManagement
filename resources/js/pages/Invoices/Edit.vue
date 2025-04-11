@@ -183,7 +183,7 @@
                                     {{ form.errors.file }}
                                 </p>
                                 <div v-if="invoice.file_path" class="mt-2">
-                                    <p class="text-sm">Arquivo atual: <a :href="invoice.file_path" target="_blank" class="text-blue-600 hover:underline">Ver arquivo</a></p>
+                                    <p class="text-sm">Arquivo atual: <a :href="route('invoices.view-file', invoice.id)" target="_blank" class="text-blue-600 hover:underline">Ver arquivo</a></p>
                                 </div>
                             </div>
 
