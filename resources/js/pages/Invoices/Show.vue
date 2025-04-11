@@ -172,6 +172,44 @@
                         </CardContent>
                     </Card>
                 </div>
+
+                <!-- Histórico de Logs -->
+                <div class="mt-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Histórico de Atividades</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div v-if="invoice.logs && invoice.logs.length > 0">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Data</TableHead>
+                                            <TableHead>Utilizador</TableHead>
+                                            <TableHead>Ação</TableHead>
+                                            <TableHead>Descrição</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        <TableRow v-for="log in invoice.logs" :key="log.id">
+                                            <TableCell class="whitespace-nowrap">{{ formatDateTime(log.created_at) }}</TableCell>
+                                            <TableCell>{{ log.user ? log.user.name : 'Sistema' }}</TableCell>
+                                            <TableCell>
+                                                <Badge :variant="getLogBadgeVariant(log.action)">
+                                                    {{ getLogActionText(log.action) }}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>{{ log.description }}</TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
+                            </div>
+                            <div v-else class="text-center py-4">
+                                <p class="text-muted-foreground">Nenhum registo de atividade para esta fatura</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
 
@@ -307,5 +345,37 @@ function deleteInvoice() {
             showDeleteModal.value = false;
         }
     });
+}
+
+function formatDateTime(dateTime) {
+    if (!dateTime) return '-';
+    const date = new Date(dateTime);
+    return date.toLocaleDateString('pt-PT') + ' ' + date.toLocaleTimeString('pt-PT');
+}
+
+function getLogBadgeVariant(action) {
+    switch (action) {
+        case 'created':
+            return 'success';
+        case 'updated':
+            return 'warning';
+        case 'deleted':
+            return 'destructive';
+        default:
+            return 'default';
+    }
+}
+
+function getLogActionText(action) {
+    switch (action) {
+        case 'created':
+            return 'Criada';
+        case 'updated':
+            return 'Editada';
+        case 'deleted':
+            return 'Removida';
+        default:
+            return action;
+    }
 }
 </script> 

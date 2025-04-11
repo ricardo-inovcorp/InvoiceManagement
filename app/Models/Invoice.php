@@ -45,4 +45,12 @@ class Invoice extends Model
     {
         return $this->hasMany(InvoiceItem::class);
     }
+
+    /**
+     * Obtém os logs associados a esta fatura.
+     */
+    public function logs(): HasMany
+    {
+        return $this->hasMany(InvoiceLog::class)->latest();
+    }
 }

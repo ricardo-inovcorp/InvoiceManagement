@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Models\InvoiceLog;
 use App\Models\Supplier;
 use App\Models\InvoiceItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -133,6 +135,9 @@ class InvoiceController extends Controller
                 ]);
             }
 
+            // Registrar log de criação
+            $this->logActivity($invoice, 'created', 'Fatura criada', null, $invoice->toArray());
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -148,7 +153,7 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice): Response
     {
-        $invoice->load(['supplier', 'items']);
+        $invoice->load(['supplier', 'items', 'logs.user']);
         return Inertia::render('Invoices/Show', [
             'invoice' => $invoice
         ]);
@@ -195,6 +200,9 @@ class InvoiceController extends Controller
             'items.*.total' => 'required|numeric|min:0'
         ]);
 
+        // Armazenar valores antigos para o log
+        $oldValues = $invoice->toArray();
+        
         if ($request->hasFile('file')) {
             if ($invoice->file_path) {
                 Storage::delete($invoice->file_path);
@@ -239,6 +247,9 @@ class InvoiceController extends Controller
                 }
             }
 
+            // Registrar log de atualização
+            $this->logActivity($invoice, 'updated', 'Fatura editada', $oldValues, $invoice->fresh()->toArray());
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -246,7 +257,7 @@ class InvoiceController extends Controller
         }
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', 'Fatura atualizada com sucesso.');
+            ->with('success', 'Fatura editada com sucesso.');
     }
 
     /**
@@ -254,15 +265,49 @@ class InvoiceController extends Controller
      */
     public function destroy(Invoice $invoice): RedirectResponse
     {
-        if ($invoice->file_path) {
-            Storage::delete($invoice->file_path);
-        }
-
-        $invoice->items()->delete();
+        $oldValues = $invoice->toArray();
         
-        $invoice->delete();
+        DB::beginTransaction();
+        try {
+            if ($invoice->file_path) {
+                Storage::delete($invoice->file_path);
+            }
+
+            $invoice->items()->delete();
+            
+            // Registrar log de exclusão
+            $this->logActivity($invoice, 'deleted', 'Fatura removida', $oldValues, null);
+            
+            $invoice->delete();
+            
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->withErrors(['error' => 'Erro ao remover a fatura: ' . $e->getMessage()]);
+        }
 
         return redirect()->route('invoices.index')
             ->with('success', 'Fatura removida com sucesso.');
+    }
+    
+    /**
+     * Registra um log de atividade para a fatura.
+     *
+     * @param Invoice $invoice A fatura
+     * @param string $action A ação realizada (created, updated, deleted)
+     * @param string $description Descrição da ação
+     * @param array|null $oldValues Valores antigos
+     * @param array|null $newValues Novos valores
+     * @return InvoiceLog
+     */
+    private function logActivity(Invoice $invoice, string $action, string $description, ?array $oldValues, ?array $newValues): InvoiceLog
+    {
+        return $invoice->logs()->create([
+            'user_id' => Auth::id(),
+            'action' => $action,
+            'description' => $description,
+            'old_values' => $oldValues,
+            'new_values' => $newValues,
+        ]);
     }
 }
