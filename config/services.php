@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'nif' => [
+        'api_key' => env('NIF_PT_API_KEY'),
+    ],
+
 ];

@@ -6,6 +6,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\API\NifController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,6 +18,10 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 })->name('home');
+
+// Rota para consulta de NIF
+Route::post('/api/nif/lookup', [NifController::class, 'lookup'])
+    ->name('api.nif.lookup');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
