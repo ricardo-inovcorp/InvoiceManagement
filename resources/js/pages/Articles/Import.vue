@@ -24,11 +24,30 @@ const errors = ref([]);
 
 // Monitorar mensagens flash da sessão
 watch(() => page.props.flash, (newValue) => {
+    console.log('Flash atualizado no watcher:', newValue);
+    
+    // Exibir mensagem de sucesso do flash
     if (newValue?.success) {
-        toast.success(newValue.success);
+        // Usar o tipo de toast apropriado com base nos resultados
+        if (newValue?.results) {
+            const results = newValue.results;
+            if (results.imported > 0) {
+                toast.success(newValue.success, { duration: 6000 });
+            } else if (results.errors && results.errors.length > 0) {
+                toast.warning(newValue.success, { duration: 6000 });
+            } else if (results.duplicates > 0) {
+                toast.info(newValue.success, { duration: 6000 });
+            } else {
+                toast.info(newValue.success, { duration: 5000 });
+            }
+        } else {
+            toast.success(newValue.success, { duration: 5000 });
+        }
     }
     
+    // Atualizar os resultados para exibição na UI
     if (newValue?.results) {
+        console.log('Resultados recebidos no watcher:', newValue.results);
         results.value = newValue.results;
     }
 }, { deep: true, immediate: true });
@@ -55,16 +74,89 @@ function submit() {
     results.value = null;
     errors.value = [];
     
+    // Adicionar um timeout de segurança para resetar o estado de upload após 15 segundos
+    const safetyTimeout = setTimeout(() => {
+        if (isUploading.value) {
+            isUploading.value = false;
+            toast.error('A operação de importação expirou. Por favor, tente novamente.', {
+                duration: 8000
+            });
+        }
+    }, 15000);
+    
     form.post(route('articles.import'), {
+        forceFormData: true,
         preserveScroll: true,
-        onSuccess: () => {
-            form.reset();
-            fileInput.value.value = '';
-            isUploading.value = false;
+        onStart: () => {
+            isUploading.value = true;
         },
-        onError: () => {
-            isUploading.value = false;
+        onSuccess: (response) => {
+            clearTimeout(safetyTimeout);
+            console.log('Resposta de sucesso:', response);
+            
+            // Verificar se temos resultados ou mensagem na resposta
+            const flashResults = response?.props?.flash?.results;
+            const successMsg = response?.props?.flash?.success;
+            
+            if (flashResults) {
+                results.value = flashResults;
+                
+                // Construir mensagem explícita
+                let message = "";
+                if (flashResults.imported > 0) {
+                    message = `Importação concluída: ${flashResults.imported} artigos importados, ${flashResults.duplicates} ignorados`;
+                    if (flashResults.errors && flashResults.errors.length > 0) {
+                        message += `, ${flashResults.errors.length} erros encontrados`;
+                    }
+                    toast.success(message, { duration: 6000 });
+                } else if (flashResults.errors && flashResults.errors.length > 0) {
+                    message = `Importação com problemas: ${flashResults.imported} artigos importados, ${flashResults.duplicates} ignorados, ${flashResults.errors.length} erros encontrados`;
+                    toast.warning(message, { duration: 6000 });
+                } else if (flashResults.duplicates > 0) {
+                    message = `Importação concluída: Todos os ${flashResults.duplicates} artigos já existiam no sistema`;
+                    toast.info(message, { duration: 6000 });
+                } else {
+                    toast.info('Nenhum artigo importado. Verifique o arquivo e tente novamente.', { duration: 5000 });
+                }
+                
+                // Redirecionar para a lista de artigos após um atraso para dar tempo de ver a mensagem
+                setTimeout(() => {
+                    window.location.href = route('articles.index');
+                }, 3000);
+            } else if (successMsg) {
+                // Se temos apenas uma mensagem de sucesso
+                toast.success(successMsg, { duration: 5000 });
+                
+                // Redirecionar para a lista de artigos
+                setTimeout(() => {
+                    window.location.href = route('articles.index');
+                }, 3000);
+            } else {
+                // Caso não tenhamos informações específicas
+                toast.info('Importação processada. Redirecionando para a lista de artigos...', { duration: 5000 });
+                
+                // Redirecionar para a lista de artigos
+                setTimeout(() => {
+                    window.location.href = route('articles.index');
+                }, 2000);
+            }
         },
+        onError: (errors) => {
+            clearTimeout(safetyTimeout);
+            console.log('Erros na resposta:', errors);
+            
+            // Se não tivermos mensagens de erro específicas, mostrar uma genérica
+            if (!Object.keys(errors).length) {
+                toast.error('Ocorreu um erro durante a importação. Verifique o arquivo e tente novamente.', {
+                    duration: 8000
+                });
+            }
+        },
+        onFinish: () => {
+            // Garantir que o estado de upload seja resetado
+            clearTimeout(safetyTimeout);
+            isUploading.value = false;
+        }
     });
 }
 </script>

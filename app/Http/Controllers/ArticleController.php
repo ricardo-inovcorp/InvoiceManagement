@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ArticleController extends Controller
 {
@@ -35,7 +37,7 @@ class ArticleController extends Controller
             ->when($request->has('active'), function($query) use ($request) {
                 $query->where('active', $request->active);
             })
-            ->orderBy($request->input('sort_by', 'name'), $request->input('sort_order', 'asc'))
+            ->orderBy($request->input('sort_by', 'code'), $request->input('sort_order', 'asc'))
             ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
@@ -149,18 +151,62 @@ class ArticleController extends Controller
      */
     public function import(Request $request, ArticleImportService $importService)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120', // 5MB max
-        ]);
-
         try {
-            $results = $importService->import($request->file('file'));
+            // Primeiro validamos o arquivo
+            $request->validate([
+                'file' => 'required|file|mimes:xlsx,xls,csv|max:5120', // 5MB max
+            ], [
+                'file.required' => 'Por favor, selecione um arquivo para importar.',
+                'file.file' => 'O ficheiro enviado é inválido.',
+                'file.mimes' => 'O ficheiro deve ser do tipo Excel (xlsx, xls) ou CSV.',
+                'file.max' => 'O ficheiro não pode ter mais de 5MB.',
+            ]);
+
+            // Verificar se o arquivo existe e pode ser lido
+            $file = $request->file('file');
+            if (!$file || !$file->isValid()) {
+                throw new \Exception('O arquivo não pôde ser processado. Verifique se o formato é suportado.');
+            }
+
+            // Processar a importação
+            $results = $importService->import($file);
             
-            return back()->with([
-                'success' => 'Importação concluída com sucesso.',
+            // Log detalhado dos resultados
+            Log::info('Resultados da importação de artigos:', $results);
+            
+            // Criamos uma mensagem de resumo detalhada para o usuário
+            if ($results['imported'] > 0) {
+                $message = "Importação concluída com sucesso: {$results['imported']} artigos importados, {$results['duplicates']} ignorados" . 
+                    (count($results['errors']) > 0 ? ", " . count($results['errors']) . " erros encontrados." : ".");
+            } else if (count($results['errors']) > 0) {
+                $message = "Importação finalizada com problemas: {$results['imported']} artigos importados, {$results['duplicates']} ignorados, " . 
+                    count($results['errors']) . " erros encontrados.";
+            } else if ($results['duplicates'] > 0) {
+                $message = "Importação finalizada: Todos os {$results['duplicates']} artigos já existiam no sistema (ignorados).";
+            } else {
+                $message = "Nenhum artigo importado. Verifique o arquivo e tente novamente.";
+            }
+            
+            // Log adicional para debug
+            Log::info('Mensagem para o usuário:', ['message' => $message]);
+            
+            // Retornar os resultados e a mensagem usando withFlash
+            return redirect()->back()->with([
+                'success' => $message,
                 'results' => $results
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Erros de validação são retornados automaticamente pelo Laravel
+            return back()->withErrors($e->errors());
         } catch (\Exception $e) {
+            // Log detalhado do erro para diagnóstico
+            Log::error('Erro na importação de artigos: ' . $e->getMessage(), [
+                'file' => $request->hasFile('file') ? $request->file('file')->getClientOriginalName() : 'Nenhum arquivo',
+                'exception' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Mensagem amigável para o usuário
             return back()->withErrors(['file' => 'Erro ao processar o arquivo: ' . $e->getMessage()]);
         }
     }
@@ -170,12 +216,70 @@ class ArticleController extends Controller
      */
     public function downloadTemplate()
     {
-        $templatePath = public_path('templates/article-import-template.xlsx');
-        
-        // Verificar se o arquivo existe
-        if (!file_exists($templatePath)) {
-            return back()->withErrors(['message' => 'Template não encontrado.']);
+        try {
+            $templatePath = public_path('templates/article-import-template.xlsx');
+            
+            // Verificar se o arquivo existe
+            if (!file_exists($templatePath)) {
+                // Se não existir, criar um template básico
+                Log::warning('Template de importação não encontrado. Criando um novo.', ['caminho' => $templatePath]);
+                return $this->createAndDownloadTemplate();
+            }
+            
+            return response()->download($templatePath, 'template-importacao-artigos.xlsx');
+        } catch (\Exception $e) {
+            Log::error('Erro ao baixar template:', ['erro' => $e->getMessage()]);
+            return back()->withErrors(['message' => 'Não foi possível baixar o template: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * Cria um template básico para importação de artigos
+     */
+    private function createAndDownloadTemplate()
+    {
+        // Usar a biblioteca PhpSpreadsheet para criar um template
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Definir cabeçalhos
+        $headers = ['Código', 'Nome', 'Descrição', 'Preço', 'Categoria', 'Subcategoria'];
+        $sheet->fromArray([$headers], null, 'A1');
+        
+        // Adicionar exemplo
+        $example = ['ART001', 'Produto de Exemplo', 'Descrição do produto', '100.00', 'Categoria Exemplo', 'Subcategoria Exemplo'];
+        $sheet->fromArray([$example], null, 'A2');
+        
+        // Estilizar cabeçalhos
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4'],
+            ],
+        ];
+        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+        
+        // Ajustar largura das colunas
+        foreach (range('A', 'F') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Criar diretório para armazenar o template se não existir
+        $templateDir = public_path('templates');
+        if (!file_exists($templateDir)) {
+            mkdir($templateDir, 0755, true);
+        }
+        
+        // Salvar o arquivo
+        $templatePath = public_path('templates/article-import-template.xlsx');
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save($templatePath);
+        
+        Log::info('Template de importação criado com sucesso', ['caminho' => $templatePath]);
         
         return response()->download($templatePath, 'template-importacao-artigos.xlsx');
     }

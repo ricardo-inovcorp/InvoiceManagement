@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Pagination from '@/Components/Pagination.vue';
+import Pagination from '@/components/Pagination.vue';
 import { useToast } from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
 
@@ -16,6 +16,8 @@ const props = defineProps({
 const searchQuery = ref(props.filters.search || '');
 const categoryId = ref(props.filters.category_id || null);
 const activeFilter = ref(props.filters.active !== undefined ? props.filters.active : null);
+const sortBy = ref(props.filters.sort_by || 'code');
+const sortOrder = ref(props.filters.sort_order || 'asc');
 
 const toast = useToast();
 
@@ -39,6 +41,9 @@ function applyFilters() {
         filters.active = activeFilter.value;
     }
     
+    filters.sort_by = sortBy.value;
+    filters.sort_order = sortOrder.value;
+    
     return filters;
 }
 
@@ -46,9 +51,25 @@ function clearFilters() {
     searchQuery.value = '';
     categoryId.value = null;
     activeFilter.value = null;
+    sortBy.value = 'code';
+    sortOrder.value = 'asc';
     
     // Redirecionar para a página base sem filtros
     window.location = route('articles.index');
+}
+
+function sort(column) {
+    if (sortBy.value === column) {
+        // Se já estiver ordenando por esta coluna, inverte a ordem
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        // Se estiver ordenando por uma nova coluna, define como ascendente
+        sortBy.value = column;
+        sortOrder.value = 'asc';
+    }
+    
+    // Redirecionar com os novos parâmetros de ordenação
+    window.location = route('articles.index', applyFilters());
 }
 </script>
 
@@ -136,14 +157,23 @@ function clearFilters() {
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-700">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" @click="sort('code')">
                                             Código
+                                            <span v-if="sortBy === 'code'" class="ml-1">
+                                                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                                            </span>
                                         </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" @click="sort('name')">
                                             Nome
+                                            <span v-if="sortBy === 'name'" class="ml-1">
+                                                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                                            </span>
                                         </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" @click="sort('price')">
                                             Preço
+                                            <span v-if="sortBy === 'price'" class="ml-1">
+                                                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                                            </span>
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Categoria
@@ -210,7 +240,7 @@ function clearFilters() {
                         </div>
                         
                         <!-- Paginação -->
-                        <div class="mt-6">
+                        <div class="mt-6 flex justify-end">
                             <Pagination :links="articles.links" />
                         </div>
                     </div>
