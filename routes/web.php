@@ -7,6 +7,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\API\NifController;
+use App\Http\Controllers\ArticleController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
 
@@ -43,6 +44,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rotas de Itens de Fatura
     Route::resource('invoices.items', InvoiceItemController::class)->shallow();
+    
+    // Rotas de Artigos
+    Route::resource('articles', ArticleController::class);
+    
+    // Rotas de Importação de Artigos
+    Route::get('/articles-import', [ArticleController::class, 'showImport'])->name('articles.import.show');
+    Route::post('/articles-import', [ArticleController::class, 'import'])->name('articles.import');
+    Route::get('/articles-import/template', [ArticleController::class, 'downloadTemplate'])->name('articles.import.template');
+    
+    // Rota para obter subcategorias de uma categoria
+    Route::get('/categories/{category}/subcategories', [ArticleController::class, 'subcategories'])->name('categories.subcategories');
 });
 
 require __DIR__.'/settings.php';

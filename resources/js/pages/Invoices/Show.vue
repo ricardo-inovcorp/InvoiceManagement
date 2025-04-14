@@ -199,7 +199,41 @@
                                                     {{ getLogActionText(log.action) }}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell>{{ log.description }}</TableCell>
+                                            <TableCell>
+                                                <div>
+                                                    <p>{{ log.description }}</p>
+                                                    <Button 
+                                                        v-if="log.action === 'updated' && log.old_values && log.new_values"
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        class="mt-1 text-xs" 
+                                                        @click="toggleLogDetails(log)"
+                                                    >
+                                                        {{ expandedLogs.includes(log.id) ? 'Ocultar detalhes' : 'Ver detalhes completos' }}
+                                                    </Button>
+                                                    <div v-if="expandedLogs.includes(log.id)" class="mt-2 text-sm bg-muted p-3 rounded-md">
+                                                        <h5 class="font-semibold mb-2">Detalhes das alterações:</h5>
+                                                        <div class="grid grid-cols-1 gap-2">
+                                                            <div v-for="(newValue, field) in log.new_values" :key="field" class="flex flex-col">
+                                                                <template v-if="!isIgnoredField(field) && fieldChanged(field, log.old_values, log.new_values)">
+                                                                    <div class="font-medium">{{ getFieldLabel(field) }}</div>
+                                                                    <div class="flex items-center gap-2">
+                                                                        <div class="bg-red-50 text-red-800 p-1 rounded">
+                                                                            <span class="text-xs text-red-500 font-medium">Anterior:</span> 
+                                                                            {{ formatLogValue(field, log.old_values[field]) }}
+                                                                        </div>
+                                                                        <div class="text-muted">→</div>
+                                                                        <div class="bg-green-50 text-green-800 p-1 rounded">
+                                                                            <span class="text-xs text-green-500 font-medium">Novo:</span> 
+                                                                            {{ formatLogValue(field, newValue) }}
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
                                     </TableBody>
                                 </Table>
@@ -265,6 +299,7 @@ const props = defineProps({
 });
 
 const showDeleteModal = ref(false);
+const expandedLogs = ref([]);
 
 function formatDate(date) {
     if (!date) return '-';
@@ -377,5 +412,70 @@ function getLogActionText(action) {
         default:
             return action;
     }
+}
+
+function toggleLogDetails(log) {
+    if (expandedLogs.value.includes(log.id)) {
+        expandedLogs.value = expandedLogs.value.filter(id => id !== log.id);
+    } else {
+        expandedLogs.value.push(log.id);
+    }
+}
+
+function isIgnoredField(field) {
+    return ['created_at', 'updated_at', 'id', 'deleted_at'].includes(field);
+}
+
+function fieldChanged(field, oldValues, newValues) {
+    return oldValues && newValues && 
+           oldValues[field] !== undefined && 
+           newValues[field] !== undefined && 
+           oldValues[field] !== newValues[field];
+}
+
+function getFieldLabel(field) {
+    const fieldLabels = {
+        'supplier_id': 'Fornecedor',
+        'invoice_number': 'Número da Fatura',
+        'issue_date': 'Data de Emissão',
+        'due_date': 'Data de Vencimento',
+        'total_amount': 'Valor Total',
+        'tax_amount': 'Valor do Imposto',
+        'status': 'Status',
+        'payment_method': 'Método de Pagamento',
+        'payment_date': 'Data de Pagamento',
+        'file_path': 'Arquivo da Fatura',
+        'notes': 'Observações'
+    };
+    
+    return fieldLabels[field] || field;
+}
+
+function formatLogValue(field, value) {
+    if (value === null || value === undefined) {
+        return 'Não preenchido';
+    }
+    
+    // Formata datas
+    if (['issue_date', 'due_date', 'payment_date'].includes(field) && value) {
+        return formatDate(value);
+    }
+    
+    // Formata status
+    if (field === 'status') {
+        return getStatusText(value);
+    }
+    
+    // Formata valores monetários
+    if (['total_amount', 'tax_amount'].includes(field)) {
+        return formatCurrency(value);
+    }
+    
+    // Para arquivo da fatura, mostra apenas se existe ou não
+    if (field === 'file_path') {
+        return value ? 'Arquivo anexado' : 'Sem arquivo';
+    }
+    
+    return value;
 }
 </script> 

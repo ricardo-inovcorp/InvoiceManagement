@@ -302,6 +302,54 @@ class InvoiceController extends Controller
      */
     private function logActivity(Invoice $invoice, string $action, string $description, ?array $oldValues, ?array $newValues): InvoiceLog
     {
+        // Campos que serão ignorados na comparação
+        $ignoredFields = ['created_at', 'updated_at', 'id', 'deleted_at'];
+        $fieldLabels = [
+            'supplier_id' => 'Fornecedor',
+            'invoice_number' => 'Número da Fatura',
+            'issue_date' => 'Data de Emissão',
+            'due_date' => 'Data de Vencimento',
+            'total_amount' => 'Valor Total',
+            'tax_amount' => 'Valor do Imposto',
+            'status' => 'Status',
+            'payment_method' => 'Método de Pagamento',
+            'payment_date' => 'Data de Pagamento',
+            'file_path' => 'Arquivo da Fatura',
+            'notes' => 'Observações'
+        ];
+        
+        // Se for uma atualização, cria um relatório detalhado das alterações
+        if ($action === 'updated' && $oldValues && $newValues) {
+            $changes = [];
+            
+            foreach ($newValues as $field => $value) {
+                // Ignora os campos da lista
+                if (in_array($field, $ignoredFields)) {
+                    continue;
+                }
+                
+                // Verifica se o campo existe em ambos os arrays e se o valor mudou
+                if (
+                    isset($oldValues[$field]) && 
+                    isset($newValues[$field]) && 
+                    $oldValues[$field] !== $newValues[$field]
+                ) {
+                    $fieldLabel = $fieldLabels[$field] ?? $field;
+                    
+                    // Formata valores especiais como datas e status
+                    $oldFormattedValue = $this->formatValueForLog($field, $oldValues[$field]);
+                    $newFormattedValue = $this->formatValueForLog($field, $newValues[$field]);
+                    
+                    $changes[] = "{$fieldLabel}: de \"{$oldFormattedValue}\" para \"{$newFormattedValue}\"";
+                }
+            }
+            
+            // Atualiza a descrição com os detalhes das alterações
+            if (!empty($changes)) {
+                $description .= " " . implode(', ', $changes);
+            }
+        }
+
         return $invoice->logs()->create([
             'user_id' => Auth::id(),
             'action' => $action,
@@ -309,5 +357,54 @@ class InvoiceController extends Controller
             'old_values' => $oldValues,
             'new_values' => $newValues,
         ]);
+    }
+    
+    /**
+     * Formata um valor para exibição no log
+     * 
+     * @param string $field Nome do campo
+     * @param mixed $value Valor do campo
+     * @return string Valor formatado
+     */
+    private function formatValueForLog(string $field, $value): string
+    {
+        if ($value === null) {
+            return 'Não preenchido';
+        }
+        
+        // Formata datas
+        if (in_array($field, ['issue_date', 'due_date', 'payment_date']) && $value) {
+            return date('d/m/Y', strtotime($value));
+        }
+        
+        // Formata status
+        if ($field === 'status') {
+            $statusLabels = [
+                'pending' => 'Pendente',
+                'paid' => 'Pago',
+                'overdue' => 'Atrasado',
+                'cancelled' => 'Cancelado'
+            ];
+            
+            return $statusLabels[$value] ?? $value;
+        }
+        
+        // Formata valores monetários
+        if (in_array($field, ['total_amount', 'tax_amount'])) {
+            return '€ ' . number_format($value, 2, ',', '.');
+        }
+        
+        // Formata fornecedor
+        if ($field === 'supplier_id') {
+            $supplier = \App\Models\Supplier::find($value);
+            return $supplier ? $supplier->company_name : 'ID: ' . $value;
+        }
+        
+        // Para arquivo da fatura, mostra apenas se existe ou não
+        if ($field === 'file_path') {
+            return $value ? 'Arquivo anexado' : 'Sem arquivo';
+        }
+        
+        return (string) $value;
     }
 }
