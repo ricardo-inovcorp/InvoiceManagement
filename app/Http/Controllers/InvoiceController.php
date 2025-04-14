@@ -80,9 +80,20 @@ class InvoiceController extends Controller
             $selectedSupplier = Supplier::find($selectedSupplierId);
         }
         
+        // Buscar todos os artigos ativos
+        $articles = \App\Models\Article::where('active', true)
+            ->orderBy('code')
+            ->get(['id', 'code', 'name', 'price'])
+            ->map(function($article) {
+                // Garantir que o preço seja um número, não um objeto
+                $article->price = (float) $article->price;
+                return $article;
+            });
+        
         return Inertia::render('Invoices/Create', [
             'suppliers' => $suppliers,
-            'selectedSupplier' => $selectedSupplier
+            'selectedSupplier' => $selectedSupplier,
+            'articles' => $articles
         ]);
     }
 

@@ -240,10 +240,11 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <Label for="item_description">Descrição</Label>
-                                        <Input
+                                        <Select
                                             id="item_description"
-                                            v-model="currentItem.description"
-                                            type="text"
+                                            v-model="selectedArticle"
+                                            :options="articles.map(a => ({ value: a.id, label: a.code + ' - ' + a.name }))"
+                                            @update:model-value="handleArticleSelect"
                                         />
                                     </div>
                                     <div>
@@ -332,7 +333,7 @@
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -355,6 +356,10 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    articles: {
+        type: Array,
+        required: true,
+    }
 });
 
 const items = ref([]);
@@ -366,6 +371,8 @@ const currentItem = ref({
     tax_amount: 0,
     total: 0
 });
+
+const selectedArticle = ref(null);
 
 const form = useForm({
     supplier_id: '',
@@ -427,6 +434,7 @@ function addItem() {
     updateInvoiceTotals();
     
     // Limpar o formulário do item atual
+    selectedArticle.value = null;
     currentItem.value = {
         description: '',
         quantity: 1,
@@ -481,6 +489,32 @@ const submit = () => {
         },
     });
 };
+
+// Função para atualizar a descrição e preço quando um artigo for selecionado
+function handleArticleSelect(articleId) {
+    console.log('Artigo selecionado:', articleId);
+    
+    const article = props.articles.find(a => a.id === parseInt(articleId));
+    console.log('Dados do artigo:', article);
+    
+    if (article) {
+        // Atualizar a descrição
+        currentItem.value.description = `${article.code} - ${article.name}`;
+        
+        // Garantir que o preço seja um número válido e atualizar diretamente
+        const price = typeof article.price === 'number' ? article.price : parseFloat(article.price || 0);
+        console.log('Preço obtido do artigo:', price, 'Tipo:', typeof price);
+        
+        // Atualizar o preço unitário
+        currentItem.value.unit_price = price;
+        
+        // Verificar se a atualização ocorreu corretamente
+        console.log('Preço atualizado para:', currentItem.value.unit_price);
+        
+        // Recalcular totais
+        calculateItemTotals();
+    }
+}
 
 // Inicializar cálculos
 calculateItemTotals();
