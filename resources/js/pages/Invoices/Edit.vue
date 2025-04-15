@@ -242,13 +242,39 @@
                                 <!-- Formulário para adicionar item -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <Label for="item_description">Descrição</Label>
-                                        <Input
-                                            id="item_description"
-                                            v-model="currentItem.description"
-                                            type="text"
+                                        <Label for="item_input_type">Tipo de Entrada</Label>
+                                        <Select
+                                            id="item_input_type"
+                                            v-model="itemInputType"
+                                            :options="[
+                                                { value: 'manual', label: 'Descrição Manual' },
+                                                { value: 'article', label: 'Selecionar Artigo' },
+                                            ]"
                                         />
                                     </div>
+                                    
+                                    <!-- Entrada manual de descrição -->
+                                    <div v-if="itemInputType === 'manual'">
+                                        <Label for="item_description_manual">Descrição</Label>
+                                        <Input
+                                            id="item_description_manual"
+                                            v-model="currentItem.description"
+                                            type="text"
+                                            placeholder="Ex: 5 Resmas de Papel A4"
+                                        />
+                                    </div>
+                                    
+                                    <!-- Seleção de artigo -->
+                                    <div v-if="itemInputType === 'article'">
+                                        <Label for="item_description">Artigo</Label>
+                                        <Select
+                                            id="item_description"
+                                            v-model="selectedArticle"
+                                            :options="articles.map(a => ({ value: a.id, label: a.code + ' - ' + a.name }))"
+                                            @update:model-value="handleArticleSelect"
+                                        />
+                                    </div>
+                                    
                                     <div>
                                         <Label for="item_quantity">Quantidade</Label>
                                         <Input
@@ -335,7 +361,7 @@
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -362,6 +388,10 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    articles: {
+        type: Array,
+        required: true,
+    },
 });
 
 const items = ref([]);
@@ -373,6 +403,8 @@ const currentItem = ref({
     tax_amount: 0,
     total: 0
 });
+const itemInputType = ref('manual');
+const selectedArticle = ref(null);
 
 // Formatação das datas para exibição no input type="date"
 function formatDateForInput(dateString) {
@@ -405,9 +437,15 @@ const form = useForm({
 });
 
 const isItemValid = computed(() => {
-    return currentItem.value.description && 
-           currentItem.value.quantity > 0 && 
-           currentItem.value.unit_price > 0;
+    const hasValidQuantityAndPrice = currentItem.value.quantity > 0 && currentItem.value.unit_price > 0;
+    
+    // Se for entrada manual, a descrição deve estar preenchida
+    if (itemInputType.value === 'manual') {
+        return currentItem.value.description && hasValidQuantityAndPrice;
+    }
+    
+    // Se for seleção de artigo, deve haver um artigo selecionado
+    return selectedArticle.value && hasValidQuantityAndPrice;
 });
 
 const calculateGrandTotal = computed(() => {
@@ -442,13 +480,22 @@ function addItem() {
     // Calcular os totais antes de adicionar
     calculateItemTotals();
     
+    // Preparar o item para adicionar
+    const newItem = {...currentItem.value};
+    
+    // Se estiver usando a seleção de artigo, incluir o article_id
+    if (itemInputType.value === 'article' && selectedArticle.value) {
+        newItem.article_id = selectedArticle.value;
+    }
+    
     // Adicionar o item à lista
-    items.value.push({...currentItem.value});
+    items.value.push(newItem);
     
     // Atualizar os totais da fatura
     updateInvoiceTotals();
     
     // Limpar o formulário do item atual
+    selectedArticle.value = null;
     currentItem.value = {
         description: '',
         quantity: 1,
@@ -543,6 +590,15 @@ function recalculateTaxAmount() {
 
 const handleFileChange = (event) => {
     form.file = event.target.files[0];
+};
+
+const handleArticleSelect = (articleId) => {
+    // Implemente a lógica para selecionar um artigo com base no ID
+    // Este exemplo é básico e deve ser ajustado de acordo com a sua implementação
+    const article = props.articles.find(a => a.id === articleId);
+    if (article) {
+        currentItem.value.description = article.code + ' - ' + article.name;
+    }
 };
 
 const submit = () => {

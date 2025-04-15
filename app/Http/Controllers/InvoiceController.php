@@ -25,6 +25,9 @@ class InvoiceController extends Controller
         $status = $request->input('status');
         $dueDateStart = $request->input('due_date_start');
         $dueDateEnd = $request->input('due_date_end');
+        $issueDateStart = $request->input('issue_date_start');
+        $issueDateEnd = $request->input('issue_date_end');
+        $validationStatus = $request->input('validation_status');
         
         $query = Invoice::with('supplier');
         
@@ -43,6 +46,11 @@ class InvoiceController extends Controller
             $query->where('status', $status);
         }
         
+        // Filtrar por status de validação
+        if ($validationStatus) {
+            $query->where('validation_status', $validationStatus);
+        }
+        
         // Filtrar por data de vencimento - início
         if ($dueDateStart) {
             $query->whereDate('due_date', '>=', $dueDateStart);
@@ -53,6 +61,16 @@ class InvoiceController extends Controller
             $query->whereDate('due_date', '<=', $dueDateEnd);
         }
         
+        // Filtrar por data de emissão - início
+        if ($issueDateStart) {
+            $query->whereDate('issue_date', '>=', $issueDateStart);
+        }
+        
+        // Filtrar por data de emissão - fim
+        if ($issueDateEnd) {
+            $query->whereDate('issue_date', '<=', $issueDateEnd);
+        }
+        
         $invoices = $query->latest()->paginate(10)
                         ->withQueryString(); // Mantém os parâmetros de query na paginação
         
@@ -61,8 +79,11 @@ class InvoiceController extends Controller
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'validation_status' => $validationStatus,
                 'due_date_start' => $dueDateStart,
-                'due_date_end' => $dueDateEnd
+                'due_date_end' => $dueDateEnd,
+                'issue_date_start' => $issueDateStart,
+                'issue_date_end' => $issueDateEnd
             ]
         ]);
     }
@@ -130,19 +151,33 @@ class InvoiceController extends Controller
 
         $items = $validated['items'] ?? [];
         unset($validated['items']);
+        
+        // Definir o estado de validação inicial para 'pending'
+        $validated['validation_status'] = Invoice::VALIDATION_PENDING;
 
         DB::beginTransaction();
         try {
             $invoice = Invoice::create($validated);
 
             foreach ($items as $itemData) {
+                // Extrair article_id se fornecido (caso de uso da autocomplete de artigos)
+                $articleId = $itemData['article_id'] ?? null;
+                $isValid = false;
+                
+                // Se tivermos um article_id, o item já está associado e é válido
+                if ($articleId) {
+                    $isValid = true;
+                }
+                
                 $invoice->items()->create([
                     'description' => $itemData['description'],
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'tax_rate' => $itemData['tax_rate'],
                     'tax_amount' => $itemData['tax_amount'],
-                    'total_price' => $itemData['total']
+                    'total_price' => $itemData['total'],
+                    'article_id' => $articleId,
+                    'is_valid' => $isValid
                 ]);
             }
 

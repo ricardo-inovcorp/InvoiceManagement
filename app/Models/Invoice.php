@@ -21,6 +21,7 @@ class Invoice extends Model
         'total_amount',
         'tax_amount',
         'status',
+        'validation_status',
         'payment_method',
         'payment_date',
         'file_path',
@@ -35,6 +36,13 @@ class Invoice extends Model
         'total_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
     ];
+    
+    /**
+     * Estados de validação da fatura
+     */
+    const VALIDATION_PENDING = 'pending';
+    const VALIDATION_VALIDATED = 'validated';
+    const VALIDATION_VERIFIED = 'verified';
 
     public function supplier(): BelongsTo
     {
@@ -52,5 +60,59 @@ class Invoice extends Model
     public function logs(): HasMany
     {
         return $this->hasMany(InvoiceLog::class)->latest();
+    }
+    
+    /**
+     * Verifica se todos os itens da fatura estão validados.
+     */
+    public function allItemsValidated(): bool
+    {
+        // Se não houver itens, retorna falso
+        if ($this->items->isEmpty()) {
+            return false;
+        }
+        
+        // Verifica se todos os itens estão validados
+        foreach ($this->items as $item) {
+            if (!$item->isValidated()) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Marca a fatura como validada.
+     */
+    public function markAsValidated(): bool
+    {
+        if ($this->validation_status === self::VALIDATION_PENDING && $this->allItemsValidated()) {
+            $this->validation_status = self::VALIDATION_VALIDATED;
+            return $this->save();
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Marca a fatura como verificada.
+     */
+    public function markAsVerified(): bool
+    {
+        if ($this->validation_status === self::VALIDATION_VALIDATED) {
+            $this->validation_status = self::VALIDATION_VERIFIED;
+            return $this->save();
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Retorna os itens não validados da fatura.
+     */
+    public function getInvalidItems()
+    {
+        return $this->items()->where('is_valid', false)->orWhereNull('article_id')->get();
     }
 }

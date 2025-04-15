@@ -10,6 +10,7 @@ use App\Http\Controllers\API\NifController;
 use App\Http\Controllers\ArticleController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\InvoiceValidationController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -32,6 +33,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rotas de Faturas
     Route::resource('invoices', InvoiceController::class);
+    
+    // Rotas de Validação de Faturas
+    Route::get('/invoices/{invoice}/validate', [InvoiceValidationController::class, 'show'])
+        ->name('invoices.validate');
+    Route::post('/invoice-items/{item}/associate-article', [InvoiceValidationController::class, 'associateArticle'])
+        ->name('invoice-items.associate-article');
+    Route::post('/invoice-items/{item}/create-and-associate', [InvoiceValidationController::class, 'createAndAssociateArticle'])
+        ->name('invoice-items.create-and-associate');
+    Route::post('/invoices/{invoice}/mark-validated', [InvoiceValidationController::class, 'markAsValidated'])
+        ->name('invoices.mark-validated');
+    Route::post('/invoices/{invoice}/mark-verified', [InvoiceValidationController::class, 'markAsVerified'])
+        ->name('invoices.mark-verified');
     
     // Rota para visualizar arquivo da fatura
     Route::get('/view-invoice-file/{invoice}', function (App\Models\Invoice $invoice) {

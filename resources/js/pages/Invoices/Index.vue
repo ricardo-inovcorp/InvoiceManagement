@@ -93,7 +93,7 @@
                             
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <Label for="status">Status</Label>
+                                    <Label for="status">Status do Pagamento</Label>
                                     <Select 
                                         id="status" 
                                         v-model="form.status"
@@ -104,6 +104,20 @@
                                             { value: 'paid', label: 'Pago' },
                                             { value: 'overdue', label: 'Atrasado' },
                                             { value: 'cancelled', label: 'Cancelado' }
+                                        ]"
+                                    />
+                                </div>
+                                <div>
+                                    <Label for="validation_status">Status de Validação</Label>
+                                    <Select 
+                                        id="validation_status" 
+                                        v-model="form.validation_status"
+                                        class="bg-black text-white"
+                                        :options="[
+                                            { value: '', label: 'Todos' },
+                                            { value: 'pending', label: 'Pendente de Validação' },
+                                            { value: 'validated', label: 'Validado' },
+                                            { value: 'verified', label: 'Verificado' }
                                         ]"
                                     />
                                 </div>
@@ -124,7 +138,8 @@
                                     <TableHead class="whitespace-nowrap">Emissão</TableHead>
                                     <TableHead class="whitespace-nowrap">Vencimento</TableHead>
                                     <TableHead class="whitespace-nowrap">Valor Total</TableHead>
-                                    <TableHead class="whitespace-nowrap">Status</TableHead>
+                                    <TableHead class="whitespace-nowrap">Status do Pagamento</TableHead>
+                                    <TableHead class="whitespace-nowrap">Status de Validação</TableHead>
                                     <TableHead class="whitespace-nowrap">Ações</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -138,6 +153,11 @@
                                     <TableCell class="whitespace-nowrap">
                                         <Badge :variant="getBadgeVariant(invoice.status)">
                                             {{ getStatusText(invoice.status) }}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell class="whitespace-nowrap">
+                                        <Badge :variant="getValidationBadgeVariant(invoice.validation_status)">
+                                            {{ getValidationStatusText(invoice.validation_status) }}
                                         </Badge>
                                     </TableCell>
                                     <TableCell class="whitespace-nowrap">
@@ -172,7 +192,7 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
 import { reactive, ref, computed } from 'vue';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -185,7 +205,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import Pagination from '@/Components/Pagination.vue';
+import Pagination from '@/components/Pagination.vue';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 
@@ -200,6 +220,7 @@ const props = defineProps({
         default: () => ({
             search: '',
             status: '',
+            validation_status: '',
             due_date_start: '',
             due_date_end: '',
             issue_date_start: '',
@@ -211,6 +232,7 @@ const props = defineProps({
 const form = reactive({
     search: props.filters.search || '',
     status: props.filters.status || '',
+    validation_status: props.filters.validation_status || '',
     due_date_start: props.filters.due_date_start || '',
     due_date_end: props.filters.due_date_end || '',
     issue_date_start: props.filters.issue_date_start || '',
@@ -220,7 +242,7 @@ const form = reactive({
 const showFilters = ref(false);
 
 const hasFilters = computed(() => {
-    return form.search || form.status || form.due_date_start || form.due_date_end || 
+    return form.search || form.status || form.validation_status || form.due_date_start || form.due_date_end || 
            form.issue_date_start || form.issue_date_end;
 });
 
@@ -228,6 +250,7 @@ function search() {
     router.get(route('invoices.index'), {
         search: form.search,
         status: form.status,
+        validation_status: form.validation_status,
         due_date_start: form.due_date_start,
         due_date_end: form.due_date_end,
         issue_date_start: form.issue_date_start,
@@ -241,6 +264,7 @@ function search() {
 function resetSearch() {
     form.search = '';
     form.status = '';
+    form.validation_status = '';
     form.due_date_start = '';
     form.due_date_end = '';
     form.issue_date_start = '';
@@ -291,6 +315,32 @@ function getStatusText(status) {
             return 'Cancelado';
         default:
             return status;
+    }
+}
+
+function getValidationBadgeVariant(status) {
+    switch (status) {
+        case 'pending':
+            return 'warning';
+        case 'validated':
+            return 'secondary';
+        case 'verified':
+            return 'success';
+        default:
+            return 'default';
+    }
+}
+
+function getValidationStatusText(status) {
+    switch (status) {
+        case 'pending':
+            return 'Pendente de Validação';
+        case 'validated':
+            return 'Validado';
+        case 'verified':
+            return 'Verificado';
+        default:
+            return status || 'Pendente de Validação';
     }
 }
 </script>

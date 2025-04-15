@@ -15,6 +15,9 @@
                         <Link :href="route('invoices.index')">
                             <Button variant="outline">Voltar</Button>
                         </Link>
+                        <Button variant="outline" @click="goToValidationPage">
+                            Validar Itens
+                        </Button>
                         <Link :href="route('invoices.edit', invoice.id)">
                             <Button variant="outline">Editar</Button>
                         </Link>
@@ -38,10 +41,18 @@
                                     <dd>{{ invoice.invoice_number }}</dd>
                                 </div>
                                 <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Status</dt>
+                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Status do Pagamento</dt>
                                     <dd>
                                         <Badge :variant="getBadgeVariant(invoice.status)">
                                             {{ getStatusText(invoice.status) }}
+                                        </Badge>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Status de Validação</dt>
+                                    <dd>
+                                        <Badge :variant="getValidationBadgeVariant(invoice.validation_status)">
+                                            {{ getValidationStatusText(invoice.validation_status) }}
                                         </Badge>
                                     </dd>
                                 </div>
@@ -269,7 +280,7 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -325,29 +336,46 @@ function getBadgeVariant(status) {
         case 'paid':
             return 'success';
         case 'pending':
-            return 'warning';
+            return 'secondary';
         case 'overdue':
             return 'destructive';
         case 'cancelled':
+            return 'outline';
+        default:
+            return 'default';
+    }
+}
+
+function getValidationBadgeVariant(status) {
+    switch (status) {
+        case 'pending':
+            return 'warning';
+        case 'validated':
             return 'secondary';
+        case 'verified':
+            return 'success';
         default:
             return 'default';
     }
 }
 
 function getStatusText(status) {
-    switch (status) {
-        case 'paid':
-            return 'Pago';
-        case 'pending':
-            return 'Pendente';
-        case 'overdue':
-            return 'Atrasado';
-        case 'cancelled':
-            return 'Cancelado';
-        default:
-            return status;
-    }
+    const statusMap = {
+        pending: 'Pendente',
+        paid: 'Pago',
+        overdue: 'Atrasado',
+        cancelled: 'Cancelado'
+    };
+    return statusMap[status] || status;
+}
+
+function getValidationStatusText(status) {
+    const statusMap = {
+        pending: 'Pendente de Validação',
+        validated: 'Validado',
+        verified: 'Verificado'
+    };
+    return statusMap[status] || status;
 }
 
 function calculateBaseAmount() {
@@ -404,11 +432,11 @@ function getLogBadgeVariant(action) {
 function getLogActionText(action) {
     switch (action) {
         case 'created':
-            return 'Criada';
+            return 'Created';
         case 'updated':
-            return 'Editada';
+            return 'Updated';
         case 'deleted':
-            return 'Removida';
+            return 'Deleted';
         default:
             return action;
     }
@@ -477,5 +505,12 @@ function formatLogValue(field, value) {
     }
     
     return value;
+}
+
+function goToValidationPage() {
+    const validationUrl = route('invoices.validate', props.invoice.id);
+    
+    // Usar JavaScript nativo para navegar diretamente
+    window.location.href = validationUrl;
 }
 </script> 

@@ -239,7 +239,31 @@
                                 <!-- Formulário para adicionar item -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <Label for="item_description">Descrição</Label>
+                                        <Label for="item_input_type">Tipo de Entrada</Label>
+                                        <Select
+                                            id="item_input_type"
+                                            v-model="itemInputType"
+                                            :options="[
+                                                { value: 'manual', label: 'Descrição Manual' },
+                                                { value: 'article', label: 'Selecionar Artigo' },
+                                            ]"
+                                        />
+                                    </div>
+                                    
+                                    <!-- Entrada manual de descrição -->
+                                    <div v-if="itemInputType === 'manual'">
+                                        <Label for="item_description_manual">Descrição</Label>
+                                        <Input
+                                            id="item_description_manual"
+                                            v-model="currentItem.description"
+                                            type="text"
+                                            placeholder="Ex: 5 Resmas de Papel A4"
+                                        />
+                                    </div>
+                                    
+                                    <!-- Seleção de artigo -->
+                                    <div v-if="itemInputType === 'article'">
+                                        <Label for="item_description">Artigo</Label>
                                         <Select
                                             id="item_description"
                                             v-model="selectedArticle"
@@ -247,6 +271,7 @@
                                             @update:model-value="handleArticleSelect"
                                         />
                                     </div>
+                                    
                                     <div>
                                         <Label for="item_quantity">Quantidade</Label>
                                         <Input
@@ -373,6 +398,7 @@ const currentItem = ref({
 });
 
 const selectedArticle = ref(null);
+const itemInputType = ref('manual');
 
 const form = useForm({
     supplier_id: '',
@@ -390,9 +416,15 @@ const form = useForm({
 });
 
 const isItemValid = computed(() => {
-    return currentItem.value.description && 
-           currentItem.value.quantity > 0 && 
-           currentItem.value.unit_price > 0;
+    const hasValidQuantityAndPrice = currentItem.value.quantity > 0 && currentItem.value.unit_price > 0;
+    
+    // Se for entrada manual, a descrição deve estar preenchida
+    if (itemInputType.value === 'manual') {
+        return currentItem.value.description && hasValidQuantityAndPrice;
+    }
+    
+    // Se for seleção de artigo, deve haver um artigo selecionado
+    return selectedArticle.value && hasValidQuantityAndPrice;
 });
 
 const calculateGrandTotal = computed(() => {
@@ -427,8 +459,16 @@ function addItem() {
     // Calcular os totais antes de adicionar
     calculateItemTotals();
     
+    // Preparar o item para adicionar com ou sem article_id
+    const newItem = {...currentItem.value};
+    
+    // Se a seleção for por artigo, adicionar o article_id
+    if (itemInputType.value === 'article' && selectedArticle.value) {
+        newItem.article_id = selectedArticle.value;
+    }
+    
     // Adicionar o item à lista
-    items.value.push({...currentItem.value});
+    items.value.push(newItem);
     
     // Atualizar os totais da fatura
     updateInvoiceTotals();
