@@ -11,6 +11,8 @@ use App\Http\Controllers\ArticleController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\InvoiceValidationController;
+use App\Http\Controllers\BankAccountController;
+use App\Http\Controllers\BankTransactionController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -68,6 +70,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Rota para obter subcategorias de uma categoria
     Route::get('/categories/{category}/subcategories', [ArticleController::class, 'subcategories'])->name('categories.subcategories');
+
+    // Rotas para contas bancárias
+    Route::resource('bank-accounts', BankAccountController::class);
+
+    // Rotas para transações bancárias
+    Route::resource('bank-transactions', BankTransactionController::class);
 });
 
 require __DIR__.'/settings.php';

@@ -63,6 +63,14 @@ class Invoice extends Model
     }
     
     /**
+     * Obtém as transações bancárias associadas a esta fatura.
+     */
+    public function bankTransactions(): HasMany
+    {
+        return $this->hasMany(BankTransaction::class);
+    }
+    
+    /**
      * Verifica se todos os itens da fatura estão validados.
      */
     public function allItemsValidated(): bool
