@@ -1,113 +1,158 @@
 <template>
+    <Head title="Fornecedores" />
+
     <AppLayout :user="auth.user">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Fornecedores</h2>
-        </template>
-
-        <Head title="Fornecedores" />
-
-        <div class="w-full py-4">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-medium">Fornecedores</h3>
-            </div>
-
-            <!-- Barra de pesquisa -->
-            <div class="mb-6">
-                <form @submit.prevent="search">
-                    <div class="flex space-x-2">
-                        <div class="md:w-1/2 lg:w-1/3">
-                            <Input 
-                                type="text" 
-                                placeholder="Pesquisar por nome da empresa ou NIF..." 
-                                v-model="form.search"
-                                class="w-full"
-                            />
-                        </div>
-                        <Button type="submit">Pesquisar</Button>
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            @click="resetSearch"
-                            v-if="form.search"
-                        >
-                            Limpar
-                        </Button>
-                        <Link :href="route('suppliers.create')">
-                            <Button>Novo Fornecedor</Button>
+        <div class="py-12">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
+                <div class="mb-6 flex justify-between items-center">
+                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Fornecedores</h1>
+                    <div class="flex space-x-4">
+                        <Link :href="route('suppliers.create')" class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                            Novo Fornecedor
                         </Link>
                     </div>
-                </form>
-            </div>
+                </div>
 
-            <Card class="w-full">
-                <CardContent class="overflow-auto p-0">
-                    <div class="w-full overflow-x-auto">
-                        <Table class="w-full">
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead class="whitespace-nowrap">Empresa</TableHead>
-                                    <TableHead class="whitespace-nowrap">NIF</TableHead>
-                                    <TableHead class="whitespace-nowrap">Email</TableHead>
-                                    <TableHead class="whitespace-nowrap">Telefone</TableHead>
-                                    <TableHead class="whitespace-nowrap">Morada</TableHead>
-                                    <TableHead class="whitespace-nowrap">Cidade</TableHead>
-                                    <TableHead class="whitespace-nowrap">Concelho</TableHead>
-                                    <TableHead class="whitespace-nowrap">Distrito</TableHead>
-                                    <TableHead class="whitespace-nowrap">Código Postal</TableHead>
-                                    <TableHead class="whitespace-nowrap">Status</TableHead>
-                                    <TableHead class="whitespace-nowrap">Notas</TableHead>
-                                    <TableHead class="whitespace-nowrap">Ações</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                <TableRow v-for="supplier in suppliers.data" :key="supplier.id">
-                                    <TableCell class="whitespace-nowrap">{{ supplier.company_name }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ supplier.document }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ supplier.email }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ supplier.phone }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ supplier.address }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ supplier.city }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ supplier.county_id }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ supplier.district_id }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ supplier.zip_code }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">
-                                        <Badge :variant="supplier.active ? 'success' : 'destructive'">
-                                            {{ supplier.active ? 'Ativo' : 'Inativo' }}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell class="max-w-xs truncate" :title="supplier.notes || 'No note to show'">
-                                        <template v-if="supplier.notes">
-                                            {{ supplier.notes }}
-                                        </template>
-                                        <template v-else>
-                                            No note to show
-                                        </template>
-                                    </TableCell>
-                                    <TableCell class="whitespace-nowrap">
-                                        <div class="flex space-x-2">
-                                            <Link :href="route('suppliers.edit', supplier.id)">
-                                                <Button variant="outline" size="sm">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                        <!-- Filtros -->
+                        <div class="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-md">
+                            <h3 class="text-lg font-medium mb-3">Filtros</h3>
+                            <form @submit.prevent="search">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label for="search" class="block text-sm font-medium mb-1">Procurar</label>
+                                        <Input 
+                                            type="text" 
+                                            id="search"
+                                            placeholder="Pesquisar por nome da empresa ou NIF..." 
+                                            v-model="form.search"
+                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-900"
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="active" class="block text-sm font-medium mb-1">Estado</label>
+                                        <select
+                                            id="active"
+                                            v-model="form.active"
+                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-900"
+                                        >
+                                            <option :value="null">Todos</option>
+                                            <option :value="1">Activos</option>
+                                            <option :value="0">Inactivos</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="flex items-end space-x-2">
+                                        <Button 
+                                            type="submit" 
+                                            class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+                                        >
+                                            Aplicar Filtros
+                                        </Button>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            @click="resetSearch" 
+                                            v-if="form.search || form.active !== null"
+                                            class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+                                        >
+                                            Limpar
+                                        </Button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Lista de fornecedores -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Empresa
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            NIF
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Email
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Telefone
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Cidade
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Estado
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Ações
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tr v-for="supplier in suppliers.data" :key="supplier.id">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            {{ supplier.company_name }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {{ supplier.document }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {{ supplier.email }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {{ supplier.phone }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {{ supplier.city }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span
+                                                :class="[
+                                                    'px-2 py-1 text-xs rounded-full',
+                                                    supplier.active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                                ]"
+                                            >
+                                                {{ supplier.active ? 'Activo' : 'Inactivo' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex justify-end space-x-2">
+                                                <Link
+                                                    :href="route('suppliers.show', supplier.id)"
+                                                    class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                >
+                                                    Ver
+                                                </Link>
+                                                <Link
+                                                    :href="route('suppliers.edit', supplier.id)"
+                                                    class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300"
+                                                >
                                                     Editar
-                                                </Button>
-                                            </Link>
-                                            <Link :href="route('suppliers.show', supplier.id)">
-                                                <Button variant="outline" size="sm">
-                                                    Detalhes
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
+                                                </Link>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="suppliers.data.length === 0">
+                                        <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                            Nenhum fornecedor encontrado.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Paginação -->
+                        <div class="mt-6 flex justify-end">
+                            <Pagination :links="suppliers.links" />
+                        </div>
                     </div>
-
-                    <!-- Paginação -->
-                    <div class="mt-4 pl-4 pb-4 flex justify-start">
-                        <Pagination :links="suppliers.links" />
-                    </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     </AppLayout>
 </template>
@@ -118,16 +163,6 @@ import { reactive } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
@@ -139,19 +174,29 @@ const props = defineProps({
     filters: {
         type: Object,
         default: () => ({
-            search: ''
+            search: '',
+            active: null
         })
     }
 });
 
 const form = reactive({
     search: props.filters.search || '',
+    active: props.filters.active !== undefined ? props.filters.active : null
 });
 
 function search() {
-    router.get(route('suppliers.index'), {
-        search: form.search,
-    }, {
+    const params = {};
+    
+    if (form.search) {
+        params.search = form.search;
+    }
+    
+    if (form.active !== null) {
+        params.active = form.active;
+    }
+    
+    router.get(route('suppliers.index'), params, {
         preserveState: true,
         preserveScroll: true,
     });
@@ -159,6 +204,7 @@ function search() {
 
 function resetSearch() {
     form.search = '';
+    form.active = null;
     router.get(route('suppliers.index'), {}, {
         preserveState: true,
         preserveScroll: true,
@@ -167,18 +213,5 @@ function resetSearch() {
 </script>
 
 <style scoped>
-/* Força a tabela a ocupar toda a largura disponível */
-:deep(.table) {
-    width: 100%;
-    table-layout: auto;
-}
-
-:deep(.sidebar-inset) {
-    max-width: 100% !important;
-    padding: 0 !important;
-}
-
-:deep(.pagination) {
-    justify-content: flex-start !important;
-}
+/* Estilos específicos para a página de fornecedores, se necessário */
 </style> 

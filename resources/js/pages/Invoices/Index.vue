@@ -1,190 +1,238 @@
 <template>
-    <AppLayout :user="auth.user">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Faturas</h2>
-        </template>
-
         <Head title="Faturas" />
 
-        <div class="w-full py-4">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-medium">Faturas</h3>
-            </div>
+    <AppLayout :user="auth.user">
+        <div class="py-12">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
+                <div class="mb-6 flex justify-between items-center">
+                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Faturas</h1>
+                    <div class="flex space-x-4">
+                        <Link :href="route('invoices.create')" class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                            Nova Fatura
+                    </Link>
+                    </div>
+                </div>
 
-            <!-- Barra de pesquisa -->
-            <div class="mb-6">
-                <form @submit.prevent="search">
-                    <div class="flex flex-col space-y-4">
-                        <div class="flex space-x-2">
-                            <div class="md:w-1/2 lg:w-1/3">
-                                <Input 
-                                    type="text" 
-                                    placeholder="Pesquisar por fornecedor ou número da fatura..." 
-                                    v-model="form.search"
-                                    class="w-full"
-                                />
-                            </div>
-                            <Button type="submit">Pesquisar</Button>
-                            <Button 
-                                type="button" 
-                                variant="outline" 
-                                @click="resetSearch"
-                                v-if="hasFilters"
-                            >
-                                Limpar
-                            </Button>
-                            <Link :href="route('invoices.create')">
-                                <Button>Nova Fatura</Button>
-                            </Link>
-                            <Button 
-                                type="button" 
-                                variant="outline" 
-                                @click="showFilters = !showFilters"
-                            >
-                                {{ showFilters ? 'Esconder Filtros' : 'Filtros Avançados' }}
-                            </Button>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                        <!-- Filtros -->
+                        <div class="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-md">
+                            <h3 class="text-lg font-medium mb-3">Filtros</h3>
+                            <form @submit.prevent="search">
+                                <div class="flex flex-col space-y-4">
+                                        <div class="flex space-x-2">
+                                        <div class="md:w-1/2 lg:w-1/3">
+                                            <Input 
+                                                type="text" 
+                                                placeholder="Pesquisar por fornecedor ou número da fatura..." 
+                                                v-model="form.search"
+                                                class="w-full"
+                                            />
+                                        </div>
+                                        <Button type="submit" class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                                            Aplicar Filtros
+                                        </Button>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            @click="resetSearch"
+                                            v-if="hasFilters"
+                                            class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+                                        >
+                                            Limpar
+                                        </Button>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            @click="showFilters = !showFilters"
+                                            class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+                                        >
+                                            {{ showFilters ? 'Esconder Filtros' : 'Filtros Avançados' }}
+                                        </Button>
+                                    </div>
+                                    
+                                    <!-- Filtros avançados -->
+                                    <div v-if="showFilters" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <Label for="due_date_start">Vencimento - Início</Label>
+                                            <Input 
+                                                id="due_date_start" 
+                                                type="date" 
+                                                v-model="form.due_date_start"
+                                                class="w-full"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <Label for="due_date_end">Vencimento - Fim</Label>
+                                            <Input 
+                                                id="due_date_end" 
+                                                type="date" 
+                                                v-model="form.due_date_end"
+                                                class="w-full"
+                                            />
+                                        </div>
+                                    
+                                        <div>
+                                            <Label for="issue_date_start">Emissão - Início</Label>
+                                            <Input 
+                                                id="issue_date_start" 
+                                                type="date" 
+                                                v-model="form.issue_date_start"
+                                                class="w-full"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <Label for="issue_date_end">Emissão - Fim</Label>
+                                            <Input 
+                                                id="issue_date_end" 
+                                                type="date" 
+                                                v-model="form.issue_date_end"
+                                                class="w-full"
+                                            />
+                                        </div>
+                                    
+                                        <div>
+                                            <Label for="status">Status do Pagamento</Label>
+                                            <select
+                                                id="status"
+                                                v-model="form.status"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-900"
+                                            >
+                                                <option value="">Todos</option>
+                                                <option value="pending">Pendente</option>
+                                                <option value="paid">Pago</option>
+                                                <option value="overdue">Atrasado</option>
+                                                <option value="cancelled">Cancelado</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <Label for="validation_status">Status de Validação</Label>
+                                            <select
+                                                id="validation_status"
+                                                v-model="form.validation_status"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-900"
+                                            >
+                                                <option value="">Todos</option>
+                                                <option value="pending">Pendente de Validação</option>
+                                                <option value="validated">Validado</option>
+                                                <option value="verified">Verificado</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                         
-                        <!-- Filtros avançados -->
-                        <div v-if="showFilters" class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <Label for="due_date_start">Vencimento - Início</Label>
-                                    <Input 
-                                        id="due_date_start" 
-                                        type="date" 
-                                        v-model="form.due_date_start"
-                                        class="w-full"
-                                    />
-                                </div>
-                                
-                                <div>
-                                    <Label for="due_date_end">Vencimento - Fim</Label>
-                                    <Input 
-                                        id="due_date_end" 
-                                        type="date" 
-                                        v-model="form.due_date_end"
-                                        class="w-full"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <Label for="issue_date_start">Emissão - Início</Label>
-                                    <Input 
-                                        id="issue_date_start" 
-                                        type="date" 
-                                        v-model="form.issue_date_start"
-                                        class="w-full"
-                                    />
-                                </div>
-                                
-                                <div>
-                                    <Label for="issue_date_end">Emissão - Fim</Label>
-                                    <Input 
-                                        id="issue_date_end" 
-                                        type="date" 
-                                        v-model="form.issue_date_end"
-                                        class="w-full"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <Label for="status">Status do Pagamento</Label>
-                                    <Select 
-                                        id="status" 
-                                        v-model="form.status"
-                                        class="bg-black text-white"
-                                        :options="[
-                                            { value: '', label: 'Todos' },
-                                            { value: 'pending', label: 'Pendente' },
-                                            { value: 'paid', label: 'Pago' },
-                                            { value: 'overdue', label: 'Atrasado' },
-                                            { value: 'cancelled', label: 'Cancelado' }
-                                        ]"
-                                    />
-                                </div>
-                                <div>
-                                    <Label for="validation_status">Status de Validação</Label>
-                                    <Select 
-                                        id="validation_status" 
-                                        v-model="form.validation_status"
-                                        class="bg-black text-white"
-                                        :options="[
-                                            { value: '', label: 'Todos' },
-                                            { value: 'pending', label: 'Pendente de Validação' },
-                                            { value: 'validated', label: 'Validado' },
-                                            { value: 'verified', label: 'Verificado' }
-                                        ]"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <Card class="w-full">
-                <CardContent class="overflow-auto p-0">
-                    <div class="w-full overflow-x-auto">
-                        <Table class="w-full">
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead class="whitespace-nowrap">Fatura</TableHead>
-                                    <TableHead class="whitespace-nowrap">Fornecedor</TableHead>
-                                    <TableHead class="whitespace-nowrap">Emissão</TableHead>
-                                    <TableHead class="whitespace-nowrap">Vencimento</TableHead>
-                                    <TableHead class="whitespace-nowrap">Valor Total</TableHead>
-                                    <TableHead class="whitespace-nowrap">Status do Pagamento</TableHead>
-                                    <TableHead class="whitespace-nowrap">Status de Validação</TableHead>
-                                    <TableHead class="whitespace-nowrap">Ações</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                <TableRow v-for="invoice in invoices.data" :key="invoice.id">
-                                    <TableCell class="whitespace-nowrap">{{ invoice.invoice_number }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ invoice.supplier ? invoice.supplier.company_name : '-' }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ formatDate(invoice.issue_date) }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ formatDate(invoice.due_date) }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">{{ formatCurrency(invoice.total_amount) }}</TableCell>
-                                    <TableCell class="whitespace-nowrap">
-                                        <Badge :variant="getBadgeVariant(invoice.status)">
-                                            {{ getStatusText(invoice.status) }}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell class="whitespace-nowrap">
-                                        <Badge :variant="getValidationBadgeVariant(invoice.validation_status)">
-                                            {{ getValidationStatusText(invoice.validation_status) }}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell class="whitespace-nowrap">
-                                        <div class="flex space-x-2">
-                                            <Link :href="route('invoices.edit', invoice.id)">
-                                                <Button variant="outline" size="sm">
+                        <!-- Lista de faturas -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Fatura
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Fornecedor
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Emissão
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Vencimento
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Valor Total
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Status Pagamento
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Status Validação
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Ações
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tr v-for="invoice in invoices.data" :key="invoice.id">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            {{ invoice.invoice_number }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {{ invoice.supplier ? invoice.supplier.company_name : '-' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {{ formatDate(invoice.issue_date) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {{ formatDate(invoice.due_date) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {{ formatCurrency(invoice.total_amount) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span
+                                                :class="[
+                                                    'px-2 py-1 text-xs rounded-full',
+                                                    getBadgeVariant(invoice.status) === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                                                    getBadgeVariant(invoice.status) === 'warning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                                    getBadgeVariant(invoice.status) === 'destructive' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                                ]"
+                                            >
+                                                {{ getStatusText(invoice.status) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span
+                                                :class="[
+                                                    'px-2 py-1 text-xs rounded-full',
+                                                    getValidationBadgeVariant(invoice.validation_status) === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                                                    getValidationBadgeVariant(invoice.validation_status) === 'warning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                                    getValidationBadgeVariant(invoice.validation_status) === 'secondary' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                                ]"
+                                            >
+                                                {{ getValidationStatusText(invoice.validation_status) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex justify-end space-x-2">
+                                                <Link
+                                                    :href="route('invoices.show', invoice.id)"
+                                                    class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                >
+                                                    Ver
+                                                </Link>
+                                                <Link
+                                                    :href="route('invoices.edit', invoice.id)"
+                                                    class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300"
+                                                >
                                                     Editar
-                                                </Button>
-                                            </Link>
-                                            <Link :href="route('invoices.show', invoice.id)">
-                                                <Button variant="outline" size="sm">
-                                                    Detalhes
-                                                </Button>
                                             </Link>
                                         </div>
-                                    </TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="invoices.data.length === 0">
+                                        <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                            Nenhuma fatura encontrada.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
-                    <!-- Paginação -->
-                    <div class="mt-4 pl-4 pb-4 flex justify-start">
-                        <Pagination :links="invoices.links" />
+                        <!-- Paginação -->
+                        <div class="mt-6 flex justify-end">
+                            <Pagination :links="invoices.links" />
+                        </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     </AppLayout>
 </template>
@@ -195,19 +243,8 @@ import { reactive, ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import Pagination from '@/components/Pagination.vue';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
     auth: Object,
@@ -277,14 +314,14 @@ function resetSearch() {
 
 function formatDate(date) {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('pt-BR');
+    return new Date(date).toLocaleDateString('pt-PT');
 }
 
 function formatCurrency(value) {
-    if (!value) return 'R$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
+    if (!value) return '€0,00';
+    return new Intl.NumberFormat('pt-PT', {
         style: 'currency',
-        currency: 'BRL',
+        currency: 'EUR',
     }).format(value);
 }
 
@@ -343,21 +380,8 @@ function getValidationStatusText(status) {
             return status || 'Pendente de Validação';
     }
 }
-</script>
+</script> 
 
 <style scoped>
-/* Força a tabela a ocupar toda a largura disponível */
-:deep(.table) {
-    width: 100%;
-    table-layout: auto;
-}
-
-:deep(.sidebar-inset) {
-    max-width: 100% !important;
-    padding: 0 !important;
-}
-
-:deep(.pagination) {
-    justify-content: flex-start !important;
-}
+/* Estilos específicos, se necessário */
 </style> 

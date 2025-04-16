@@ -21,6 +21,7 @@ class SupplierController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $active = $request->input('active');
         
         $query = Supplier::query();
         
@@ -32,13 +33,19 @@ class SupplierController extends Controller
             });
         }
         
+        // Filtrar por estado (ativo/inativo)
+        if ($active !== null) {
+            $query->where('active', $active);
+        }
+        
         $suppliers = $query->latest()->paginate(10)
                             ->withQueryString(); // Mantém os parâmetros de query na paginação
         
         return Inertia::render('Suppliers/Index', [
             'suppliers' => $suppliers,
             'filters' => [
-                'search' => $search
+                'search' => $search,
+                'active' => $active !== null ? (int)$active : null
             ]
         ]);
     }

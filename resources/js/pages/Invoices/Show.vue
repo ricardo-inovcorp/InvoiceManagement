@@ -1,259 +1,261 @@
 <template>
+    <Head :title="`Fatura - ${invoice.invoice_number}`" />
+
     <AppLayout :user="auth.user">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Detalhes da Fatura</h2>
-        </template>
-
-        <Head :title="`Fatura - ${invoice.invoice_number}`" />
-
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
                 <!-- Cabeçalho com número da fatura e ações -->
                 <div class="mb-6 flex justify-between items-center">
-                    <h3 class="text-lg font-medium">Fatura #{{ invoice.invoice_number }}</h3>
+                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Fatura #{{ invoice.invoice_number }}</h1>
                     <div class="flex space-x-2">
-                        <Link :href="route('invoices.index')">
-                            <Button variant="outline">Voltar</Button>
+                        <Link :href="route('invoices.index')" class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                            Voltar
                         </Link>
-                        <Button variant="outline" @click="goToValidationPage">
+                        <button @click="goToValidationPage" class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                             Validar Itens
-                        </Button>
-                        <Link :href="route('invoices.edit', invoice.id)">
-                            <Button variant="outline">Editar</Button>
+                        </button>
+                        <Link :href="route('invoices.edit', invoice.id)" class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                            Editar
                         </Link>
-                        <Button variant="destructive" @click="showDeleteModal = true">
+                        <button @click="showDeleteModal = true" class="px-4 py-2 bg-red-500 text-white border border-red-600 rounded-md hover:bg-red-600 transition dark:bg-red-700 dark:border-red-800 dark:hover:bg-red-800">
                             Excluir
-                        </Button>
+                        </button>
                     </div>
                 </div>
 
                 <!-- Informações da fatura -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                     <!-- Detalhes da fatura -->
-                    <Card class="lg:col-span-2">
-                        <CardHeader>
-                            <CardTitle>Detalhes da Fatura</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <dl class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Número da Fatura</dt>
-                                    <dd>{{ invoice.invoice_number }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Status do Pagamento</dt>
-                                    <dd>
-                                        <Badge :variant="getBadgeVariant(invoice.status)">
-                                            {{ getStatusText(invoice.status) }}
-                                        </Badge>
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Status de Validação</dt>
-                                    <dd>
-                                        <Badge :variant="getValidationBadgeVariant(invoice.validation_status)">
-                                            {{ getValidationStatusText(invoice.validation_status) }}
-                                        </Badge>
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Data de Emissão</dt>
-                                    <dd>{{ formatDate(invoice.issue_date) }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Data de Vencimento</dt>
-                                    <dd>{{ formatDate(invoice.due_date) }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Valor Base</dt>
-                                    <dd>{{ formatCurrency(calculateBaseAmount()) }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Valor do Imposto</dt>
-                                    <dd>{{ formatCurrency(invoice.tax_amount) }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Valor Total</dt>
-                                    <dd class="font-bold">{{ formatCurrency(invoice.total_amount) }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Método de Pagamento</dt>
-                                    <dd>{{ invoice.payment_method || '-' }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Data de Pagamento</dt>
-                                    <dd>{{ formatDate(invoice.payment_date) || '-' }}</dd>
-                                </div>
-                                <div class="col-span-2">
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Ficheiro da Fatura</dt>
-                                    <dd v-if="invoice.file_path">
-                                        <a :href="route('invoices.view-file', invoice.id)" target="_blank" class="text-blue-600 hover:underline flex items-center">
-                                            <span class="mr-1">Visualizar Ficheiro</span>
-                                        </a>
-                                    </dd>
-                                    <dd v-else>Nenhum arquivo anexado</dd>
-                                </div>
-                                <div class="col-span-2">
-                                    <dt class="text-sm font-medium text-muted-foreground mb-1">Observações</dt>
-                                    <dd class="whitespace-pre-wrap">{{ invoice.notes || '-' }}</dd>
-                                </div>
-                            </dl>
-                        </CardContent>
-                    </Card>
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 lg:col-span-2">
+                        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Detalhes da Fatura</h2>
+                        <dl class="grid grid-cols-2 gap-4">
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Número da Fatura</dt>
+                                <dd class="dark:text-white">{{ invoice.invoice_number }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Status do Pagamento</dt>
+                                <dd>
+                                    <span 
+                                        :class="[
+                                            'px-2 py-1 text-xs rounded-full',
+                                            getBadgeVariant(invoice.status) === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                                            getBadgeVariant(invoice.status) === 'secondary' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                            getBadgeVariant(invoice.status) === 'destructive' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                        ]"
+                                    >
+                                        {{ getStatusText(invoice.status) }}
+                                    </span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Status de Validação</dt>
+                                <dd>
+                                    <span
+                                        :class="[
+                                            'px-2 py-1 text-xs rounded-full',
+                                            getValidationBadgeVariant(invoice.validation_status) === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                                            getValidationBadgeVariant(invoice.validation_status) === 'warning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                            getValidationBadgeVariant(invoice.validation_status) === 'secondary' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                        ]"
+                                    >
+                                        {{ getValidationStatusText(invoice.validation_status) }}
+                                    </span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Data de Emissão</dt>
+                                <dd class="dark:text-white">{{ formatDate(invoice.issue_date) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Data de Vencimento</dt>
+                                <dd class="dark:text-white">{{ formatDate(invoice.due_date) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Valor Base</dt>
+                                <dd class="dark:text-white">{{ formatCurrency(calculateBaseAmount()) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Valor do Imposto</dt>
+                                <dd class="dark:text-white">{{ formatCurrency(invoice.tax_amount) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Valor Total</dt>
+                                <dd class="font-bold dark:text-white">{{ formatCurrency(invoice.total_amount) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Método de Pagamento</dt>
+                                <dd class="dark:text-white">{{ invoice.payment_method || '-' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Data de Pagamento</dt>
+                                <dd class="dark:text-white">{{ formatDate(invoice.payment_date) || '-' }}</dd>
+                            </div>
+                            <div class="col-span-2">
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Ficheiro da Fatura</dt>
+                                <dd v-if="invoice.file_path">
+                                    <a :href="route('invoices.view-file', invoice.id)" target="_blank" class="text-blue-600 hover:underline flex items-center dark:text-blue-400">
+                                        <span class="mr-1">Visualizar Ficheiro</span>
+                                    </a>
+                                </dd>
+                                <dd v-else class="dark:text-gray-400">Nenhum arquivo anexado</dd>
+                            </div>
+                            <div class="col-span-2">
+                                <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Observações</dt>
+                                <dd class="whitespace-pre-wrap dark:text-white">{{ invoice.notes || '-' }}</dd>
+                            </div>
+                        </dl>
+                    </div>
 
                     <!-- Dados do fornecedor -->
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Fornecedor</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div v-if="invoice.supplier">
-                                <h4 class="text-base font-medium mb-2">{{ invoice.supplier.name }}</h4>
-                                <p class="text-sm text-muted-foreground mb-1">NIF: {{ invoice.supplier.document }}</p>
-                                <p class="text-sm text-muted-foreground mb-1">{{ invoice.supplier.email }}</p>
-                                <p class="text-sm text-muted-foreground mb-1">{{ invoice.supplier.phone }}</p>
-                                <p class="text-sm text-muted-foreground mb-4">
-                                    {{ invoice.supplier.address }}<br>
-                                    {{ invoice.supplier.city }}, {{ invoice.supplier.state }}<br>
-                                    {{ invoice.supplier.zip_code }}
-                                </p>
-                                <Link :href="route('suppliers.show', invoice.supplier.id)">
-                                    <Button variant="outline" size="sm">Ver detalhes do fornecedor</Button>
-                                </Link>
-                            </div>
-                            <div v-else>
-                                <p class="text-muted-foreground">Fornecedor não encontrado</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Fornecedor</h2>
+                        <div v-if="invoice.supplier">
+                            <h4 class="text-base font-medium mb-2 dark:text-white">{{ invoice.supplier.name }}</h4>
+                            <p class="text-sm text-muted-foreground dark:text-gray-400 mb-1">NIF: {{ invoice.supplier.document }}</p>
+                            <p class="text-sm text-muted-foreground dark:text-gray-400 mb-1">{{ invoice.supplier.email }}</p>
+                            <p class="text-sm text-muted-foreground dark:text-gray-400 mb-1">{{ invoice.supplier.phone }}</p>
+                            <p class="text-sm text-muted-foreground dark:text-gray-400 mb-4">
+                                {{ invoice.supplier.address }}<br>
+                                {{ invoice.supplier.city }}, {{ invoice.supplier.state }}<br>
+                                {{ invoice.supplier.zip_code }}
+                            </p>
+                            <Link :href="route('suppliers.show', invoice.supplier.id)" class="px-3 py-1.5 text-sm bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition inline-block dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                                Ver detalhes do fornecedor
+                            </Link>
+                        </div>
+                        <div v-else>
+                            <p class="text-muted-foreground dark:text-gray-400">Fornecedor não encontrado</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Itens da fatura -->
-                <div class="mt-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Itens da Fatura</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div v-if="invoice.items && invoice.items.length > 0">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Descrição</TableHead>
-                                            <TableHead class="text-right">Quantidade</TableHead>
-                                            <TableHead class="text-right">Preço Unitário</TableHead>
-                                            <TableHead class="text-right">Taxa de Imposto</TableHead>
-                                            <TableHead class="text-right">Valor do Imposto</TableHead>
-                                            <TableHead class="text-right">Total</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        <TableRow v-for="item in invoice.items" :key="item.id">
-                                            <TableCell>{{ item.description }}</TableCell>
-                                            <TableCell class="text-right">{{ item.quantity }}</TableCell>
-                                            <TableCell class="text-right">{{ formatCurrency(item.unit_price) }}</TableCell>
-                                            <TableCell class="text-right">{{ item.tax_rate }}%</TableCell>
-                                            <TableCell class="text-right">{{ formatCurrency(item.tax_amount) }}</TableCell>
-                                            <TableCell class="text-right">{{ formatCurrency(item.total_price) }}</TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 mb-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Itens da Fatura</h2>
+                    <div v-if="invoice.items && invoice.items.length > 0">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Descrição</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Quantidade</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Preço Unitário</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Taxa de Imposto</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Valor do Imposto</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tr v-for="item in invoice.items" :key="item.id">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-white">{{ item.description }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right dark:text-white">{{ item.quantity }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right dark:text-white">{{ formatCurrency(item.unit_price) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right dark:text-white">{{ item.tax_rate }}%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right dark:text-white">{{ formatCurrency(item.tax_amount) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right dark:text-white">{{ formatCurrency(item.total_price) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
-                                <!-- Resumo da fatura -->
-                                <div class="mt-6 flex justify-end">
-                                    <div class="w-full max-w-xs">
-                                        <div class="flex justify-between py-2">
-                                            <span class="font-medium">Subtotal:</span>
-                                            <span>{{ formatCurrency(calculateBaseAmount()) }}</span>
-                                        </div>
-                                        <div class="flex justify-between py-2 border-t border-gray-200">
-                                            <span class="font-medium">Impostos:</span>
-                                            <span>{{ formatCurrency(invoice.tax_amount) }}</span>
-                                        </div>
-                                        <div class="flex justify-between py-2 border-t border-gray-200 font-bold">
-                                            <span>Total:</span>
-                                            <span>{{ formatCurrency(invoice.total_amount) }}</span>
-                                        </div>
-                                    </div>
+                        <!-- Resumo da fatura -->
+                        <div class="mt-6 flex justify-end">
+                            <div class="w-full max-w-xs bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+                                <div class="flex justify-between py-2">
+                                    <span class="font-medium dark:text-white">Subtotal:</span>
+                                    <span class="dark:text-white">{{ formatCurrency(calculateBaseAmount()) }}</span>
+                                </div>
+                                <div class="flex justify-between py-2 border-t border-gray-200 dark:border-gray-600">
+                                    <span class="font-medium dark:text-white">Impostos:</span>
+                                    <span class="dark:text-white">{{ formatCurrency(invoice.tax_amount) }}</span>
+                                </div>
+                                <div class="flex justify-between py-2 border-t border-gray-200 dark:border-gray-600 font-bold">
+                                    <span class="dark:text-white">Total:</span>
+                                    <span class="dark:text-white">{{ formatCurrency(invoice.total_amount) }}</span>
                                 </div>
                             </div>
-                            <div v-else>
-                                <p class="text-muted-foreground">Nenhum item encontrado para esta fatura</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <p class="text-muted-foreground dark:text-gray-400">Nenhum item encontrado para esta fatura</p>
+                    </div>
                 </div>
 
                 <!-- Histórico de Logs -->
-                <div class="mt-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Histórico de Atividades</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div v-if="invoice.logs && invoice.logs.length > 0">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Data</TableHead>
-                                            <TableHead>Utilizador</TableHead>
-                                            <TableHead>Ação</TableHead>
-                                            <TableHead>Descrição</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        <TableRow v-for="log in invoice.logs" :key="log.id">
-                                            <TableCell class="whitespace-nowrap">{{ formatDateTime(log.created_at) }}</TableCell>
-                                            <TableCell>{{ log.user ? log.user.name : 'Sistema' }}</TableCell>
-                                            <TableCell>
-                                                <Badge :variant="getLogBadgeVariant(log.action)">
-                                                    {{ getLogActionText(log.action) }}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div>
-                                                    <p>{{ log.description }}</p>
-                                                    <Button 
-                                                        v-if="log.action === 'updated' && log.old_values && log.new_values"
-                                                        variant="ghost" 
-                                                        size="sm" 
-                                                        class="mt-1 text-xs" 
-                                                        @click="toggleLogDetails(log)"
-                                                    >
-                                                        {{ expandedLogs.includes(log.id) ? 'Ocultar detalhes' : 'Ver detalhes completos' }}
-                                                    </Button>
-                                                    <div v-if="expandedLogs.includes(log.id)" class="mt-2 text-sm bg-muted p-3 rounded-md">
-                                                        <h5 class="font-semibold mb-2">Detalhes das alterações:</h5>
-                                                        <div class="grid grid-cols-1 gap-2">
-                                                            <div v-for="(newValue, field) in log.new_values" :key="field" class="flex flex-col">
-                                                                <template v-if="!isIgnoredField(field) && fieldChanged(field, log.old_values, log.new_values)">
-                                                                    <div class="font-medium">{{ getFieldLabel(field) }}</div>
-                                                                    <div class="flex items-center gap-2">
-                                                                        <div class="bg-red-50 text-red-800 p-1 rounded">
-                                                                            <span class="text-xs text-red-500 font-medium">Anterior:</span> 
-                                                                            {{ formatLogValue(field, log.old_values[field]) }}
-                                                                        </div>
-                                                                        <div class="text-muted">→</div>
-                                                                        <div class="bg-green-50 text-green-800 p-1 rounded">
-                                                                            <span class="text-xs text-green-500 font-medium">Novo:</span> 
-                                                                            {{ formatLogValue(field, newValue) }}
-                                                                        </div>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Histórico de Atividades</h2>
+                    <div v-if="invoice.logs && invoice.logs.length > 0">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Data</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Utilizador</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ação</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Descrição</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tr v-for="log in invoice.logs" :key="log.id">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-white">{{ formatDateTime(log.created_at) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-white">{{ log.user ? log.user.name : 'Sistema' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span
+                                                :class="[
+                                                    'px-2 py-1 text-xs rounded-full',
+                                                    getLogBadgeVariant(log.action) === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                                                    getLogBadgeVariant(log.action) === 'warning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                                    getLogBadgeVariant(log.action) === 'destructive' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                                ]"
+                                            >
+                                                {{ getLogActionText(log.action) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm dark:text-white">
+                                            <div>
+                                                <p>{{ log.description }}</p>
+                                                <button 
+                                                    v-if="log.action === 'updated' && log.old_values && log.new_values"
+                                                    class="mt-1 text-xs text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300" 
+                                                    @click="toggleLogDetails(log)"
+                                                >
+                                                    {{ expandedLogs.includes(log.id) ? 'Ocultar detalhes' : 'Ver detalhes completos' }}
+                                                </button>
+                                                <div v-if="expandedLogs.includes(log.id)" class="mt-2 text-sm bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                                                    <h5 class="font-semibold mb-2 dark:text-white">Detalhes das alterações:</h5>
+                                                    <div class="grid grid-cols-1 gap-2">
+                                                        <div v-for="(newValue, field) in log.new_values" :key="field" class="flex flex-col">
+                                                            <template v-if="!isIgnoredField(field) && fieldChanged(field, log.old_values, log.new_values)">
+                                                                <div class="font-medium dark:text-white">{{ getFieldLabel(field) }}</div>
+                                                                <div class="flex items-center gap-2">
+                                                                    <div class="bg-red-50 text-red-800 p-1 rounded dark:bg-red-900 dark:text-red-200">
+                                                                        <span class="text-xs text-red-500 font-medium dark:text-red-300">Anterior:</span> 
+                                                                        {{ formatLogValue(field, log.old_values[field]) }}
                                                                     </div>
-                                                                </template>
-                                                            </div>
+                                                                    <div class="text-muted dark:text-gray-400">→</div>
+                                                                    <div class="bg-green-50 text-green-800 p-1 rounded dark:bg-green-900 dark:text-green-200">
+                                                                        <span class="text-xs text-green-500 font-medium dark:text-green-300">Novo:</span> 
+                                                                        {{ formatLogValue(field, newValue) }}
+                                                                    </div>
+                                                                </div>
+                                                            </template>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
-                            </div>
-                            <div v-else class="text-center py-4">
-                                <p class="text-muted-foreground">Nenhum registo de atividade para esta fatura</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-4">
+                        <p class="text-muted-foreground dark:text-gray-400">Nenhum registo de atividade para esta fatura</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,16 +284,6 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import {
     Dialog,
     DialogContent,
@@ -314,7 +306,7 @@ const expandedLogs = ref([]);
 
 function formatDate(date) {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('pt-BR');
+    return new Date(date).toLocaleDateString('pt-PT');
 }
 
 function formatCurrency(value) {
