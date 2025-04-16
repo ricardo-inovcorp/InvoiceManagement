@@ -203,4 +203,55 @@ class BankAccountController extends Controller
         return redirect()->route('bank-accounts.index')
             ->with('success', 'Conta bancária excluída com sucesso.');
     }
+
+    /**
+     * Export bank account transactions to CSV
+     */
+    public function export(BankAccount $bankAccount)
+    {
+        // Carregar todas as transações da conta
+        $transactions = $bankAccount->transactions()
+            ->with('invoice')
+            ->latest('transaction_date')
+            ->get();
+            
+        // Nome do arquivo
+        $filename = 'transacoes_' . str_replace(' ', '_', $bankAccount->name) . '_' . date('Y-m-d') . '.csv';
+        
+        // Preparar cabeçalhos HTTP
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+        
+        // Criar callback para gerar CSV
+        $callback = function() use ($transactions) {
+            // Abrir output para PHP
+            $output = fopen('php://output', 'w');
+            
+            // Definir UTF-8 BOM para Excel reconhecer corretamente caracteres especiais
+            fputs($output, "\xEF\xBB\xBF");
+            
+            // Cabeçalho CSV
+            fputcsv($output, ['Data', 'Descrição', 'Tipo', 'Valor', 'Notas'], ';');
+            
+            // Dados
+            foreach ($transactions as $transaction) {
+                $row = [
+                    $transaction->created_at->format('d/m/Y H:i:s'),
+                    $transaction->description,
+                    $transaction->type === 'credit' ? 'Crédito' : 'Débito',
+                    number_format($transaction->amount, 2, ',', '.'),
+                    $transaction->notes ?? ''
+                ];
+                
+                fputcsv($output, $row, ';');
+            }
+            
+            fclose($output);
+        };
+        
+        // Retornar resposta para download
+        return response()->stream($callback, 200, $headers);
+    }
 }

@@ -76,6 +76,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rotas para transações bancárias
     Route::resource('bank-transactions', BankTransactionController::class);
+
+    // Exportação de transações
+    Route::get('/bank-accounts/{bankAccount}/export', [BankAccountController::class, 'export'])
+        ->name('bank-accounts.export');
 });
 
 require __DIR__.'/settings.php';

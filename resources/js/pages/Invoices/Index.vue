@@ -33,6 +33,9 @@
                             >
                                 Limpar
                             </Button>
+                            <Link :href="route('invoices.create')">
+                                <Button>Nova Fatura</Button>
+                            </Link>
                             <Button 
                                 type="button" 
                                 variant="outline" 
@@ -40,9 +43,6 @@
                             >
                                 {{ showFilters ? 'Esconder Filtros' : 'Filtros Avançados' }}
                             </Button>
-                            <Link :href="route('invoices.create')">
-                                <Button>Nova Fatura</Button>
-                            </Link>
                         </div>
                         
                         <!-- Filtros avançados -->
