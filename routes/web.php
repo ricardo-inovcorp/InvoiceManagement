@@ -8,6 +8,8 @@ use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\API\NifController;
 use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\SubcategoryController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\InvoiceValidationController;
@@ -70,6 +72,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Rota para obter subcategorias de uma categoria
     Route::get('/categories/{category}/subcategories', [ArticleController::class, 'subcategories'])->name('categories.subcategories');
+    
+    // Rotas para gerenciar categorias e subcategorias
+    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::post('/subcategories', [SubcategoryController::class, 'store'])->name('subcategories.store');
 
     // Rotas para contas bancárias
     Route::resource('bank-accounts', BankAccountController::class);

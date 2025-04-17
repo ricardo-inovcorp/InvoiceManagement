@@ -343,9 +343,25 @@ function submitAssociateForm() {
     router.post(route('invoice-items.associate-article', associateForm.value.invoice_item_id), {
         article_id: associateForm.value.article_id
     }, {
+        preserveScroll: true,
         onSuccess: () => {
+            // Fechar o modal
             associateDialogOpen.value = false;
+            // Limpar o formulário
+            associateForm.value = {
+                article_id: '',
+                invoice_item_id: null
+            };
+            // Mostrar mensagem de sucesso
             toast.success("O item foi associado com sucesso ao artigo selecionado.");
+            // Recarregar a página usando o router para uma transição mais suave
+            router.visit(route('invoices.validate', props.invoice.id), {
+                preserveScroll: true
+            });
+        },
+        onError: (errors) => {
+            console.error("Erro ao associar artigo:", errors);
+            showFeedback("Erro ao associar artigo. Verifique os dados e tente novamente.", 'error');
         }
     });
 }
@@ -368,8 +384,8 @@ function submitNewArticleForm() {
         onSuccess: () => {
             newArticleDialogOpen.value = false;
             toast.success("O novo artigo foi criado e associado ao item com sucesso.");
-            // Recarregar a página após o sucesso
-            window.location.reload();
+            // Recarregar a página usando o router para uma transição mais suave
+            router.visit(route('invoices.validate', props.invoice.id));
         },
         onError: (errors) => {
             console.error("Erro ao criar e associar artigo:", errors);

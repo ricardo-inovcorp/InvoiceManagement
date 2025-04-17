@@ -73,11 +73,15 @@ class InvoiceValidationController extends Controller
             
             DB::commit();
             
-            return redirect()->back()->with('success', 'Item associado com sucesso.');
+            // Recarrega a fatura com seus relacionamentos
+            $invoice = $item->invoice->fresh(['supplier', 'items', 'items.article']);
+            
+            // Retorna uma resposta Inertia redirecionando para a mesma página
+            return Inertia::location(route('invoices.validate', $invoice->id));
             
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['error' => 'Erro ao associar artigo: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Erro ao associar artigo: ' . $e->getMessage()]);
         }
     }
     
@@ -117,11 +121,15 @@ class InvoiceValidationController extends Controller
             
             DB::commit();
             
-            return redirect()->back()->with('success', 'Artigo criado e associado com sucesso.');
+            // Recarrega a fatura com seus relacionamentos
+            $invoice = $item->invoice->fresh(['supplier', 'items', 'items.article']);
+            
+            // Retorna uma resposta Inertia redirecionando para a mesma página
+            return Inertia::location(route('invoices.validate', $invoice->id));
             
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['error' => 'Erro ao criar artigo: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Erro ao criar artigo: ' . $e->getMessage()]);
         }
     }
     

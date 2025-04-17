@@ -1,5 +1,5 @@
 <template>
-    <Head :title="`Fatura - ${invoice.invoice_number}`" />
+        <Head :title="`Fatura - ${invoice.invoice_number}`" />
 
     <AppLayout :user="auth.user">
         <div class="py-12">
@@ -7,21 +7,21 @@
                 <!-- Cabeçalho com número da fatura e ações -->
                 <div class="mb-6 flex justify-between items-center">
                     <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Fatura #{{ invoice.invoice_number }}</h1>
-                    <div class="flex space-x-2">
+                                <div class="flex space-x-2">
                         <Link :href="route('invoices.index')" class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                             Voltar
-                        </Link>
+                                    </Link>
                         <button @click="goToValidationPage" class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                             Validar Itens
                         </button>
                         <Link :href="route('invoices.edit', invoice.id)" class="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                             Editar
-                        </Link>
+                                    </Link>
                         <button @click="showDeleteModal = true" class="px-4 py-2 bg-red-500 text-white border border-red-600 rounded-md hover:bg-red-600 transition dark:bg-red-700 dark:border-red-800 dark:hover:bg-red-800">
                             Excluir
                         </button>
                     </div>
-                </div>
+                                </div>
 
                 <!-- Informações da fatura -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -33,7 +33,7 @@
                                 <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Número da Fatura</dt>
                                 <dd class="dark:text-white">{{ invoice.invoice_number }}</dd>
                             </div>
-                            <div>
+                                <div>
                                 <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Status do Pagamento</dt>
                                 <dd>
                                     <span 
@@ -49,7 +49,7 @@
                                     </span>
                                 </dd>
                             </div>
-                            <div>
+                                        <div>
                                 <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Status de Validação</dt>
                                 <dd>
                                     <span
@@ -64,28 +64,28 @@
                                         {{ getValidationStatusText(invoice.validation_status) }}
                                     </span>
                                 </dd>
-                            </div>
-                            <div>
+                                        </div>
+                                        <div>
                                 <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Data de Emissão</dt>
                                 <dd class="dark:text-white">{{ formatDate(invoice.issue_date) }}</dd>
-                            </div>
-                            <div>
+                                        </div>
+                                        <div>
                                 <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Data de Vencimento</dt>
                                 <dd class="dark:text-white">{{ formatDate(invoice.due_date) }}</dd>
-                            </div>
-                            <div>
+                                        </div>
+                                        <div>
                                 <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Valor Base</dt>
                                 <dd class="dark:text-white">{{ formatCurrency(calculateBaseAmount()) }}</dd>
-                            </div>
-                            <div>
+                                </div>
+                                <div>
                                 <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Valor do Imposto</dt>
                                 <dd class="dark:text-white">{{ formatCurrency(invoice.tax_amount) }}</dd>
-                            </div>
-                            <div>
+                                        </div>
+                                        <div>
                                 <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Valor Total</dt>
                                 <dd class="font-bold dark:text-white">{{ formatCurrency(invoice.total_amount) }}</dd>
                             </div>
-                            <div>
+                                    <div>
                                 <dt class="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-1">Método de Pagamento</dt>
                                 <dd class="dark:text-white">{{ invoice.payment_method || '-' }}</dd>
                             </div>
@@ -124,8 +124,8 @@
                             </p>
                             <Link :href="route('suppliers.show', invoice.supplier.id)" class="px-3 py-1.5 text-sm bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition inline-block dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                                 Ver detalhes do fornecedor
-                            </Link>
-                        </div>
+                                                </Link>
+                                            </div>
                         <div v-else>
                             <p class="text-muted-foreground dark:text-gray-400">Fornecedor não encontrado</p>
                         </div>
@@ -162,7 +162,7 @@
                         </div>
 
                         <!-- Resumo da fatura -->
-                        <div class="mt-6 flex justify-end">
+                            <div class="mt-6 flex justify-end">
                             <div class="w-full max-w-xs bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
                                 <div class="flex justify-between py-2">
                                     <span class="font-medium dark:text-white">Subtotal:</span>
